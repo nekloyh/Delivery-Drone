@@ -1,0 +1,7 @@
+UE/
+out/
+__pycache__/
+*.egg-info
+.git
+*.mp4
+*.avi

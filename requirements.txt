@@ -1,0 +1,6 @@
+gymnasium==0.29.1
+stable-baselines3[extra]==2.3.2
+airsim==1.8.1
+opencv-python-headless==4.9.0.80
+pandas==2.2.2
+torch==2.3.0

@@ -1,0 +1,38 @@
+services:
+  rlstack:
+    build:
+      context: ..
+      dockerfile: /docker/Dockerfile
+    container_name: drone_rlstack
+    image: drone_rlstack:latest
+
+    deploy:
+      resources:
+        limits:
+          cpus: '14'
+          memory: 24g
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+      - TZ=Etc/UTC
+      - LANG=en_US.UTF-8
+
+    shm_size: 16g
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - ..:/workspace:rw
+      - ~/.cache/pip:/root/.cache/pip
+
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null

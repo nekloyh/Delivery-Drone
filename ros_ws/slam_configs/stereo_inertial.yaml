@@ -1,0 +1,30 @@
+
+ORB_SLAM3:
+  Camera:
+    fx: 430.0
+    fy: 430.0
+    cx: 320.0
+    cy: 240.0
+    bf: 0.086
+    fps: 30.0
+    cols: 640
+    rows: 480
+    k1: 0.0
+    k2: 0.0
+    p1: 0.0
+    p2: 0.0
+    dist_model: "plumb_bob"
+
+  IMU:
+    freq: 200.0
+    acc_n: 0.2
+    acc_w: 0.01
+    gyr_n: 0.02
+    gyr_w: 0.001
+
+  system:
+    init_orient: 1
+    min_frames: 20
+    max_frames: 1000
+    no_sleep: false
+    loop_closure: true

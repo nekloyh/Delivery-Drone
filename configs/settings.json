@@ -1,0 +1,39 @@
+{
+  "SettingsVersion": 1.2,
+  "SimMode": "Multirotor",
+  "ClockSpeed": 3.0,
+  "ViewMode": "NoDisplay",
+  "RpcEnabled": true,
+  "RpcPort": 41451,
+  "Vehicles": {
+    "Drone1": {
+      "VehicleType": "SimpleFlight",
+      "AutoCreate": true,
+      "X": 0, "Y": 0, "Z": 0, "Yaw": 0,
+      "Cameras": {
+        "stereo_left": {
+          "CaptureSettings": [{ "ImageType": 0, "Width": 640, "Height": 480, "FOV_Degrees": 90 }],
+          "X": 0.10, "Y": -0.05, "Z": 0.0
+        },
+        "stereo_right": {
+          "CaptureSettings": [{ "ImageType": 0, "Width": 640, "Height": 480, "FOV_Degrees": 90 }],
+          "X": 0.10, "Y": 0.05, "Z": 0.0
+        }
+      },
+      "Sensors": {
+        "Barometer": { "SensorType": 1, "Enabled": true },
+        "Imu": { "SensorType": 2, "Enabled": true, "UpdateFrequency": 200 },
+        "Gps": { "SensorType": 3, "Enabled": false },
+        "Magnetometer": { "SensorType": 4, "Enabled": true },
+        "DistanceFront": { "SensorType": 5, "Enabled": true },
+        "LidarFront": {
+          "SensorType": 6, "Enabled": true,
+          "NumberOfChannels": 16,
+          "PointsPerSecond": 30000,
+          "Range": 50,
+          "RotationsPerSecond": 10
+        }
+      }
+    }
+  }
+}

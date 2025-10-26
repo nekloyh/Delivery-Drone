@@ -1,0 +1,10 @@
+__pycache__/
+*.sh
+*_logs/
+*.md
+logs*/
+UE/
+demo/
+out/
+*.bat/
+test/
