@@ -1,6 +1,6 @@
 # baselines/rrt_star_fixed.py
 import argparse, json
-from baselines.rrt_star_baseline import run_rrt_star_episodes  # assume your repo has this
+from baselines.rrt_star_complete import run_rrt_star_episodes
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--airsim-ip", default="127.0.0.1")

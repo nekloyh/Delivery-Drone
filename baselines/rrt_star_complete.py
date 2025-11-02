@@ -1,21 +1,149 @@
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import random
+import time
+from dataclasses import dataclass
+from typing import Iterable, Iterator, List, Sequence, Tuple
+
+import numpy as np
+import pandas as pd
+
+try:
+    import airsim  # type: ignore
+except ImportError as exc:  # pragma: no cover - runtime dependency
+    raise ImportError(
+        "The airsim package is required to run the classical baselines."
+    ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Geometry helpers
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class Node:
+    x: float
+    y: float
+    parent: int
+    cost: float
+
+
+def ned_dist(a: Sequence[float], b: Sequence[float]) -> float:
+    ax, ay, az = a
+    bx, by, bz = b
+    return math.sqrt((ax - bx) ** 2 + (ay - by) ** 2 + (az - bz) ** 2)
+
+
+def world_to_grid(x: float, y: float, xy_min: Tuple[float, float], res: float) -> Tuple[int, int]:
+    ix = int(math.floor((x - xy_min[0]) / res))
+    iy = int(math.floor((y - xy_min[1]) / res))
+    return ix, iy
+
+
+def grid_to_world(ix: int, iy: int, xy_min: Tuple[float, float], res: float) -> Tuple[float, float]:
+    wx = xy_min[0] + (ix + 0.5) * res
+    wy = xy_min[1] + (iy + 0.5) * res
+    return wx, wy
+
+
+def is_in_bounds(occ: np.ndarray, ix: int, iy: int) -> bool:
+    return 0 <= ix < occ.shape[0] and 0 <= iy < occ.shape[1]
+
+
+def is_free(occ: np.ndarray, ix: int, iy: int) -> bool:
+    return is_in_bounds(occ, ix, iy) and occ[ix, iy] == 0
+
+
+def collision_free_segment(
+    occ: np.ndarray,
+    xy_min: Tuple[float, float],
+    res: float,
+    start_xyz: Sequence[float],
+    goal_xyz: Sequence[float],
+    max_step: float | None = None,
+) -> bool:
+    sx, sy, _ = start_xyz
+    gx, gy, _ = goal_xyz
+    dist = math.hypot(gx - sx, gy - sy)
+    if dist <= 1e-6:
+        ix, iy = world_to_grid(sx, sy, xy_min, res)
+        return is_free(occ, ix, iy)
+    step = max_step or max(res * 0.5, 0.05)
+    steps = max(int(math.ceil(dist / step)), 1)
+    for i in range(steps + 1):
+        t = i / steps
+        x = sx + (gx - sx) * t
+        y = sy + (gy - sy) * t
+        ix, iy = world_to_grid(x, y, xy_min, res)
+        if not is_free(occ, ix, iy):
+            return False
+    return True
+
+
+def _iter_lidar_points(client: airsim.MultirotorClient, vehicle: str, lidar_name: str) -> Iterator[Tuple[float, float, float]]:
+    data = client.getLidarData(lidar_name=lidar_name, vehicle_name=vehicle)
+    pts = np.asarray(data.point_cloud, dtype=np.float32)
+    if pts.size == 0:
+        return iter(())
+    pts = pts.reshape(-1, 3)
+    return iter(map(tuple, pts))
+
+
+def build_occupancy_from_lidar(
+    client: airsim.MultirotorClient,
+    vehicle: str,
+    xy_min: Tuple[float, float],
+    xy_max: Tuple[float, float],
+    res: float = 0.25,
+    z_clip: Tuple[float, float] | None = None,
+    lidar_name: str = "LidarSensor1",
+) -> Tuple[np.ndarray, Tuple[float, float], float]:
+    xmin, ymin = xy_min
+    xmax, ymax = xy_max
+    width = max(int(math.ceil((xmax - xmin) / res)), 1)
+    height = max(int(math.ceil((ymax - ymin) / res)), 1)
+    occ = np.zeros((width, height), dtype=np.uint8)
+
+    zmin, zmax = z_clip if z_clip is not None else (-10.0, 10.0)
+
+    for x, y, z in _iter_lidar_points(client, vehicle, lidar_name):
+        if not (xmin <= x <= xmax and ymin <= y <= ymax and zmin <= z <= zmax):
+            continue
+        ix, iy = world_to_grid(x, y, xy_min, res)
+        if is_in_bounds(occ, ix, iy):
+            occ[ix, iy] = 1
+
+    return occ, xy_min, res
+
+
+# ---------------------------------------------------------------------------
+# RRT* planner
+# ---------------------------------------------------------------------------
+
+
 def rrt_star(
-    occ,
-    xy_min,
-    res,
-    start_xy,
-    goal_xy,
-    max_iters=20000,
-    step_size=0.3,
-    rewire_radius=1.5,
-    goal_tol=0.4,
-    goal_bias=0.05,
-):
+    occ: np.ndarray,
+    xy_min: Tuple[float, float],
+    res: float,
+    start_xy: Tuple[float, float],
+    goal_xy: Tuple[float, float],
+    max_iters: int = 20000,
+    step_size: float = 0.3,
+    rewire_radius: float = 1.5,
+    goal_tol: float = 0.4,
+    goal_bias: float = 0.05,
+) -> List[Tuple[float, float]]:
     sx, sy = start_xy
     gx, gy = goal_xy
     nodes: List[Node] = [Node(sx, sy, parent=-1, cost=0.0)]
     rng = random.Random(0)
 
-    def nearest(x, y):
+    def nearest(x: float, y: float) -> int:
         best, bestd = 0, 1e18
         for i, n in enumerate(nodes):
             d = (n.x - x) ** 2 + (n.y - y) ** 2
@@ -23,19 +151,14 @@ def rrt_star(
                 bestd, best = d, i
         return best
 
-    def near_indices(x, y, radius):
+    def near_indices(x: float, y: float, radius: float) -> List[int]:
         r2 = radius * radius
-        idx = []
-        for i, n in enumerate(nodes):
-            if (n.x - x) ** 2 + (n.y - y) ** 2 <= r2:
-                idx.append(i)
-        return idx
+        return [i for i, n in enumerate(nodes) if (n.x - x) ** 2 + (n.y - y) ** 2 <= r2]
 
-    for it in range(max_iters):
+    for _ in range(max_iters):
         if rng.random() < goal_bias:
             rx, ry = gx, gy
         else:
-            # Sample within bounding box of occ
             w, h = occ.shape
             rx, ry = grid_to_world(
                 rng.randrange(0, w), rng.randrange(0, h), xy_min, res
@@ -49,11 +172,9 @@ def rrt_star(
         tx = nx + step_size * math.cos(ang)
         ty = ny + step_size * math.sin(ang)
 
-        # Collision check segment
         if not collision_free_segment(occ, xy_min, res, (nx, ny, 0.0), (tx, ty, 0.0)):
             continue
 
-        # Choose parent with minimal cost (rewire)
         best_parent = ni
         best_cost = nodes[ni].cost + math.hypot(tx - nx, ty - ny)
         near = near_indices(tx, ty, rewire_radius)
@@ -69,7 +190,6 @@ def rrt_star(
         nodes.append(Node(tx, ty, parent=best_parent, cost=best_cost))
         new_i = len(nodes) - 1
 
-        # Rewire neighbors through new node
         for j in near:
             nj = nodes[j]
             alt_cost = nodes[new_i].cost + math.hypot(nj.x - tx, nj.y - ty)
@@ -78,9 +198,7 @@ def rrt_star(
             ):
                 nodes[j] = Node(nj.x, nj.y, parent=new_i, cost=alt_cost)
 
-        # Goal reached?
         if math.hypot(tx - gx, ty - gy) <= goal_tol:
-            # connect to goal cell center
             nodes.append(
                 Node(
                     gx,
@@ -90,8 +208,7 @@ def rrt_star(
                 )
             )
             gi = len(nodes) - 1
-            # Reconstruct
-            path = []
+            path: List[Tuple[float, float]] = []
             i = gi
             while i != -1:
                 n = nodes[i]
@@ -100,11 +217,9 @@ def rrt_star(
             path.reverse()
             return path
 
-    # Failed -> return best toward goal
     best_i = min(
         range(len(nodes)), key=lambda i: (nodes[i].x - gx) ** 2 + (nodes[i].y - gy) ** 2
     )
-    # Reconstruct partial
     path = []
     i = best_i
     while i != -1:
@@ -118,18 +233,22 @@ def rrt_star(
     return path
 
 
-# ---------- execution ----------
+# ---------------------------------------------------------------------------
+# Execution helpers
+# ---------------------------------------------------------------------------
+
+
 def follow_path(
-    client,
-    vehicle,
+    client: airsim.MultirotorClient,
+    vehicle: str,
     path_xy: List[Tuple[float, float]],
     start_z: float,
     goal_z: float,
-    dt=0.1,
-    vxy=1.0,
-    vz=0.5,
-    yawrate=0.5,
-):
+    dt: float = 0.1,
+    vxy: float = 1.0,
+    vz: float = 0.5,
+    yawrate: float = 0.5,
+) -> dict:
     if len(path_xy) == 0:
         return dict(
             success=False,
@@ -153,7 +272,7 @@ def follow_path(
     energy = 0.0
     path_len = 0.0
     prev_v = np.zeros(3, dtype=float)
-    jerks = []
+    jerks: List[float] = []
     t0 = time.time()
     for i in range(1, len(path_xy)):
         x, y = path_xy[i]
@@ -197,21 +316,26 @@ def follow_path(
     )
 
 
-# ---------- public API ----------
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
 def run_rrt_star_episodes(
-    airsim_ip,
-    airsim_port,
-    starts_xyz,
-    goals_xyz,
-    max_iters=20000,
-    rewire_radius=1.5,
-    step_size=0.3,
-    dt=0.1,
-    vxy=1.0,
-    vz=0.5,
-    yawrate=0.5,
-    vehicle="Drone1",
-):
+    airsim_ip: str,
+    airsim_port: int,
+    starts_xyz: Sequence[Sequence[float]],
+    goals_xyz: Sequence[Sequence[float]],
+    max_iters: int = 20000,
+    rewire_radius: float = 1.5,
+    step_size: float = 0.3,
+    dt: float = 0.1,
+    vxy: float = 1.0,
+    vz: float = 0.5,
+    yawrate: float = 0.5,
+    vehicle: str = "Drone1",
+    lidar_name: str = "LidarSensor1",
+) -> pd.DataFrame:
     client = airsim.MultirotorClient(ip=airsim_ip, port=airsim_port)
     client.confirmConnection()
 
@@ -236,8 +360,8 @@ def run_rrt_star_episodes(
             (xmax, ymax),
             res=0.25,
             z_clip=(min(sz, gz) - 2.0, max(sz, gz) + 2.0),
+            lidar_name=lidar_name,
         )
-        # If straight-line free: trivial plan
         if collision_free_segment(occ, xy_min, res, (sx, sy, sz), (gx, gy, gz)):
             path_xy = [(sx, sy), (gx, gy)]
         else:
@@ -254,7 +378,7 @@ def run_rrt_star_episodes(
                 goal_bias=0.1,
             )
             if len(path_xy) == 0:
-                path_xy = [(sx, sy), (gx, gy)]  # fallback
+                path_xy = [(sx, sy), (gx, gy)]
 
         metrics = follow_path(
             client,
@@ -287,8 +411,12 @@ def run_rrt_star_episodes(
     return pd.DataFrame(rows)
 
 
-# ---------- CLI ----------
-def _main():
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+
+def _main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--airsim-ip", default="host.docker.internal")
     ap.add_argument("--airsim-port", type=int, default=41451)
@@ -302,6 +430,7 @@ def _main():
     ap.add_argument("--max-iters", type=int, default=20000)
     ap.add_argument("--rewire-radius", type=float, default=1.5)
     ap.add_argument("--step-size", type=float, default=0.3)
+    ap.add_argument("--lidar-name", default="LidarSensor1")
     ap.add_argument("--log", default="/workspace/out/rrt_star_eval.parquet")
     args = ap.parse_args()
 
@@ -324,16 +453,17 @@ def _main():
         vz=args.vz_max,
         yawrate=args.yawrate_max,
         vehicle=args.vehicle,
+        lidar_name=args.lidar_name,
     )
     os.makedirs(os.path.dirname(args.log) or ".", exist_ok=True)
     try:
         df.to_parquet(args.log)
         print("[RRT*] wrote", args.log)
-    except Exception as e:
+    except Exception as exc:  # pragma: no cover - depends on optional deps
         alt = os.path.splitext(args.log)[0] + ".csv"
         df.to_csv(alt, index=False)
-        print("[RRT*] parquet failed, wrote CSV:", alt, "err=", e)
+        print("[RRT*] parquet failed, wrote CSV:", alt, "err=", exc)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
     _main()
