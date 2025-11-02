@@ -48,8 +48,10 @@
         "feature_addr": "tcp://127.0.0.1:5557",
         "floor_heights": [
             -0.0,
-            -5.0,
-            -10.0
+            -6.0,
+            -12.0,
+            -18.0,
+            -24.0
         ],
         "spawn_floor_idx": 0,
         "spawn_on_ground": true,

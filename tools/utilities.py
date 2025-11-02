@@ -77,9 +77,9 @@ def check_system_readiness() -> bool:
         success, info = check_module(module)
         display = display_name or module
         if success:
-            LOGGER.info("  ✅ %s version %s", display, info)
+            LOGGER.info("  [OK] %s version %s", display, info)
         else:
-            LOGGER.error("  ❌ %s NOT FOUND", display)
+            LOGGER.error("  [MISSING] %s", display)
             all_good = False
     
     project_modules = [
@@ -94,9 +94,9 @@ def check_system_readiness() -> bool:
     for module in project_modules:
         success, info = check_module(module)
         if success:
-            LOGGER.info("  ✅ %s", module)
+            LOGGER.info("  [OK] %s", module)
         else:
-            LOGGER.error("  ❌ %s - %s", module, info)
+            LOGGER.error("  [MISSING] %s - %s", module, info)
             all_good = False
     
     config_files = [
@@ -108,17 +108,17 @@ def check_system_readiness() -> bool:
     LOGGER.info("Checking configuration files...")
     for config_file in config_files:
         if Path(config_file).exists():
-            LOGGER.info("  ✅ %s", config_file)
+            LOGGER.info("  [OK] %s", config_file)
         else:
-            LOGGER.error("  ❌ %s NOT FOUND", config_file)
+            LOGGER.error("  [MISSING] %s", config_file)
             all_good = False
     
     LOGGER.info("="*60)
     if all_good:
-        LOGGER.info("✅ System is ready for training!")
+        LOGGER.info("System is ready for training")
         LOGGER.info("Quick start: ./scripts/train_curriculum.sh")
     else:
-        LOGGER.error("❌ System check failed. Please install missing dependencies.")
+        LOGGER.error("System check failed. Please install missing dependencies")
         LOGGER.error("Run: pip install -r requirements.txt")
     
     return all_good

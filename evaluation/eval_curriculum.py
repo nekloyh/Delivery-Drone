@@ -70,12 +70,12 @@ def evaluate_stage(
     unwrapped_env.target_actor_names = filtered_targets
     unwrapped_env.max_steps = stage["max_steps"]
     
-    LOGGER.info(f"\n{'='*70}")
-    LOGGER.info(f"📊 Evaluating stage: {stage_name}")
-    LOGGER.info(f"   Description: {stage['description']}")
-    LOGGER.info(f"   Targets: {len(filtered_targets)}")
-    LOGGER.info(f"   Max steps: {stage['max_steps']}")
-    LOGGER.info(f"{'='*70}")
+    LOGGER.info("="*70)
+    LOGGER.info("Evaluating stage: %s", stage_name)
+    LOGGER.info("   Description: %s", stage['description'])
+    LOGGER.info("   Targets: %d", len(filtered_targets))
+    LOGGER.info("   Max steps: %d", stage['max_steps'])
+    LOGGER.info("="*70)
     
     # Evaluation metrics
     episode_rewards = []
@@ -148,16 +148,18 @@ def evaluate_stage(
     }
     
     # Print results
-    LOGGER.info(f"\n📈 Results for {stage_name}:")
-    LOGGER.info(f"   Success Rate: {results['success_rate']:.2%} ± {results['success_std']:.2%}")
-    LOGGER.info(f"   Avg Reward: {results['avg_reward']:.2f} ± {results['std_reward']:.2f}")
-    LOGGER.info(f"   Median Reward: {results['median_reward']:.2f}")
-    LOGGER.info(f"   Avg Episode Length: {results['avg_length']:.0f} steps")
-    LOGGER.info(f"   Avg Final Distance: {results['avg_final_distance']:.2f}m")
-    LOGGER.info(f"   Collision Rate: {results['collision_rate']:.2%}")
-    LOGGER.info(f"   Timeout Rate: {results['timeout_rate']:.2%}")
-    LOGGER.info(f"   Battery Depleted Rate: {results['battery_depleted_rate']:.2%}")
-    LOGGER.info(f"   Avg Energy: {results['avg_energy_per_episode']:.4f}")
+    LOGGER.info("Results for %s:", stage_name)
+    LOGGER.info("   Success Rate: %.2f%% ± %.2f%%", 
+                results['success_rate'] * 100, results['success_std'] * 100)
+    LOGGER.info("   Avg Reward: %.2f ± %.2f", 
+                results['avg_reward'], results['std_reward'])
+    LOGGER.info("   Median Reward: %.2f", results['median_reward'])
+    LOGGER.info("   Avg Episode Length: %d steps", int(results['avg_length']))
+    LOGGER.info("   Avg Final Distance: %.2fm", results['avg_final_distance'])
+    LOGGER.info("   Collision Rate: %.2f%%", results['collision_rate'] * 100)
+    LOGGER.info("   Timeout Rate: %.2f%%", results['timeout_rate'] * 100)
+    LOGGER.info("   Battery Depleted Rate: %.2f%%", results['battery_depleted_rate'] * 100)
+    LOGGER.info("   Avg Energy: %.4f", results['avg_energy_per_episode'])
     
     return results
 
@@ -212,15 +214,15 @@ def main():
     
     # Validate paths
     if not Path(args.model).exists():
-        LOGGER.error(f"Model file not found: {args.model}")
+        LOGGER.error("Model file not found: %s", args.model)
         return 1
     
     if not Path(args.vecnorm).exists():
-        LOGGER.error(f"VecNormalize file not found: {args.vecnorm}")
+        LOGGER.error("VecNormalize file not found: %s", args.vecnorm)
         return 1
     
     # Load env config
-    LOGGER.info("📖 Loading configurations...")
+    LOGGER.info("Loading configurations...")
     with open(args.env_config, 'r') as f:
         env_config = json.load(f)
     
@@ -231,7 +233,7 @@ def main():
     stages_to_eval = args.stages if args.stages else curriculum.stage_names
     
     # Create env
-    LOGGER.info("🚁 Creating evaluation environment...")
+    LOGGER.info("Creating evaluation environment...")
     
     def make_env():
         env = IndoorDroneEnv(**env_config)
@@ -245,22 +247,22 @@ def main():
     env.norm_reward = False
     
     # Load model
-    LOGGER.info(f"📂 Loading model from {args.model}")
+    LOGGER.info("Loading model from %s", args.model)
     model = PPO.load(args.model)
     
-    LOGGER.info("\n" + "="*70)
-    LOGGER.info("🎯 CURRICULUM EVALUATION")
     LOGGER.info("="*70)
-    LOGGER.info(f"Model: {args.model}")
-    LOGGER.info(f"Stages to evaluate: {len(stages_to_eval)}")
-    LOGGER.info(f"Episodes per stage: {args.episodes}")
-    LOGGER.info("="*70 + "\n")
+    LOGGER.info("CURRICULUM EVALUATION")
+    LOGGER.info("="*70)
+    LOGGER.info("Model: %s", args.model)
+    LOGGER.info("Stages to evaluate: %d", len(stages_to_eval))
+    LOGGER.info("Episodes per stage: %d", args.episodes)
+    LOGGER.info("="*70)
     
     # Evaluate all stages
     all_results = {}
     for stage_name in stages_to_eval:
         if stage_name not in curriculum.stage_names:
-            LOGGER.warning(f"Stage '{stage_name}' not found in curriculum, skipping")
+            LOGGER.warning("Stage '%s' not found in curriculum, skipping", stage_name)
             continue
         
         results = evaluate_stage(
@@ -279,12 +281,12 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(all_results, f, indent=2)
     
-    LOGGER.info(f"\n✅ Evaluation complete. Results saved to {output_path}")
+    LOGGER.info("Evaluation complete. Results saved to %s", output_path)
     
     # Print overall summary
-    LOGGER.info(f"\n{'='*70}")
-    LOGGER.info("📊 OVERALL SUMMARY")
-    LOGGER.info(f"{'='*70}")
+    LOGGER.info("="*70)
+    LOGGER.info("OVERALL SUMMARY")
+    LOGGER.info("="*70)
     LOGGER.info(f"{'Stage':<30} {'Success Rate':<15} {'Avg Reward':<15}")
     LOGGER.info("-"*70)
     
@@ -295,15 +297,17 @@ def main():
             f"{results['avg_reward']:>7.2f} ± {results['std_reward']:>6.2f}"
         )
     
-    LOGGER.info("="*70 + "\n")
+    LOGGER.info("="*70)
     
     # Calculate overall metrics
     all_success_rates = [r['success_rate'] for r in all_results.values()]
     overall_success = np.mean(all_success_rates)
     
-    LOGGER.info(f"📈 Overall Success Rate: {overall_success:.2%}")
-    LOGGER.info(f"   Best Stage: {max(all_results.items(), key=lambda x: x[1]['success_rate'])[0]}")
-    LOGGER.info(f"   Worst Stage: {min(all_results.items(), key=lambda x: x[1]['success_rate'])[0]}")
+    LOGGER.info("Overall Success Rate: %.2f%%", overall_success * 100)
+    LOGGER.info("   Best Stage: %s", 
+                max(all_results.items(), key=lambda x: x[1]['success_rate'])[0])
+    LOGGER.info("   Worst Stage: %s", 
+                min(all_results.items(), key=lambda x: x[1]['success_rate'])[0])
     
     env.close()
     return 0

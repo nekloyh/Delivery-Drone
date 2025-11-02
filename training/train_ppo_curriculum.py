@@ -115,7 +115,7 @@ class CurriculumCallback(BaseCallback):
                             # Save model checkpoint at stage transition
                             model_path = f"{self.model.logger.dir}/stage_{self.curriculum.current_stage_idx}_model"
                             self.model.save(model_path)
-                            LOGGER.info(f"💾 Saved stage checkpoint: {model_path}")
+                            LOGGER.info("Saved stage checkpoint: %s", model_path)
                             
                             # Save VecNormalize stats
                             if isinstance(self.training_env, VecNormalize):
@@ -161,7 +161,7 @@ class CurriculumCallback(BaseCallback):
         stage = self.curriculum.get_current_stage()
         unwrapped_env.max_steps = stage["max_steps"]
         
-        LOGGER.info(f"🎯 Updated env: {len(new_targets)} targets, max_steps={stage['max_steps']}")
+        LOGGER.info("Configured env: %d targets, max_steps=%d", len(new_targets), stage["max_steps"])
 
 
 def make_env(env_config: dict, curriculum: CurriculumManager):
@@ -189,8 +189,8 @@ def make_env(env_config: dict, curriculum: CurriculumManager):
         env.max_steps = stage.get("max_steps", 1000)
         
         LOGGER.info(
-            f"🎯 Env created: stage={curriculum.current_stage_name}, "
-            f"targets={len(filtered_targets)}, max_steps={env.max_steps}"
+            "Created env for stage %s: %d targets, max_steps=%d",
+            curriculum.current_stage_name, len(filtered_targets), env.max_steps
         )
         
         return env
@@ -233,7 +233,7 @@ def main():
     args = parser.parse_args()
     
     # Load configs
-    LOGGER.info("📖 Loading configurations...")
+    LOGGER.info("Loading configurations...")
     
     with open(args.ppo_config, "r") as f:
         ppo_config = yaml.safe_load(f)
@@ -254,12 +254,12 @@ def main():
         curriculum_state_path = "logs_curriculum/latest/curriculum_state.json"
         if os.path.exists(curriculum_state_path):
             curriculum.load_state(curriculum_state_path)
-            LOGGER.info(f"📂 Resumed curriculum from: {curriculum_state_path}")
+            LOGGER.info("Resumed curriculum from: %s", curriculum_state_path)
         else:
             LOGGER.warning("Resume flag set but no previous state found, starting fresh")
     
     # Create environment
-    LOGGER.info("🚁 Creating training environment...")
+    LOGGER.info("Creating training environment...")
     env = DummyVecEnv([make_env(env_config, curriculum)])
     env = VecNormalize(
         env, 
@@ -274,16 +274,16 @@ def main():
     vecnorm_path = "logs_curriculum/latest/vecnorm_final.pkl"
     
     if args.resume and os.path.exists(model_path):
-        LOGGER.info(f"📂 Loading existing model from {model_path}")
+        LOGGER.info("Loading existing model from %s", model_path)
         model = PPO.load(model_path, env=env)
         
         if os.path.exists(vecnorm_path):
             env = VecNormalize.load(vecnorm_path, env)
             env.training = True
             env.norm_reward = True
-            LOGGER.info("📂 Loaded VecNormalize stats")
+            LOGGER.info("Loaded VecNormalize stats")
     else:
-        LOGGER.info("🆕 Creating new PPO model")
+        LOGGER.info("Creating new PPO model")
         model = PPO(
             policy="MlpPolicy",
             env=env,
@@ -297,14 +297,14 @@ def main():
     model.set_logger(new_logger)
     
     # Log configuration
-    LOGGER.info("\n" + "="*70)
-    LOGGER.info("🎓 CURRICULUM LEARNING TRAINING")
     LOGGER.info("="*70)
-    LOGGER.info(f"Total timesteps: {args.timesteps:,}")
-    LOGGER.info(f"Starting stage: {curriculum.current_stage_name}")
-    LOGGER.info(f"Total stages: {len(curriculum.stage_names)}")
-    LOGGER.info(f"Log directory: {log_dir}")
-    LOGGER.info("="*70 + "\n")
+    LOGGER.info("CURRICULUM LEARNING TRAINING")
+    LOGGER.info("="*70)
+    LOGGER.info("Total timesteps: %s", f"{args.timesteps:,}")
+    LOGGER.info("Starting stage: %s", curriculum.current_stage_name)
+    LOGGER.info("Total stages: %d", len(curriculum.stage_names))
+    LOGGER.info("Log directory: %s", log_dir)
+    LOGGER.info("="*70)
     
     # Callbacks
     checkpoint_callback = CheckpointCallback(
@@ -322,17 +322,17 @@ def main():
     
     # Training
     try:
-        LOGGER.info("🚀 Starting training...")
+        LOGGER.info("Starting training...")
         model.learn(
             total_timesteps=args.timesteps,
             callback=[checkpoint_callback, curriculum_callback],
             progress_bar=True
         )
     except KeyboardInterrupt:
-        LOGGER.info("⚠️  Training interrupted by user")
+        LOGGER.info("Training interrupted by user")
     finally:
         # Save final model
-        LOGGER.info("💾 Saving final model...")
+        LOGGER.info("Saving final model...")
         model.save(f"{log_dir}/final_model")
         env.save(f"{log_dir}/vecnorm_final.pkl")
         curriculum.save_state(f"{log_dir}/curriculum_state_final.json")
@@ -343,11 +343,11 @@ def main():
             latest_dir.unlink()
         try:
             latest_dir.symlink_to(Path(log_dir).absolute(), target_is_directory=True)
-            LOGGER.info(f"🔗 Created symlink: logs_curriculum/latest -> {log_dir}")
+            LOGGER.info("Created symlink: logs_curriculum/latest -> %s", log_dir)
         except Exception as exc:
-            LOGGER.warning(f"Failed to create symlink: {exc}")
+            LOGGER.warning("Failed to create symlink: %s", exc)
         
-        LOGGER.info(f"✅ Training completed. Model saved to {log_dir}")
+        LOGGER.info("Training completed. Model saved to %s", log_dir)
         LOGGER.info(curriculum.get_progress_summary())
     
     env.close()

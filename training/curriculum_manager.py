@@ -64,8 +64,8 @@ class CurriculumManager:
         self.episode_success: List[float] = []
         self.episodes_in_stage = 0
         
-        LOGGER.info(f"📚 Curriculum initialized with {len(self.stage_names)} stages")
-        LOGGER.info(f"   Starting stage: {self.current_stage_name}")
+        LOGGER.info("Curriculum initialized with %d stages", len(self.stage_names))
+        LOGGER.info("   Starting stage: %s", self.current_stage_name)
     
     def get_current_stage(self) -> Dict[str, Any]:
         """Get current stage configuration.
@@ -145,10 +145,12 @@ class CurriculumManager:
         threshold = stage["success_threshold"]
         
         if success_rate >= threshold:
-            LOGGER.info(f"✅ Stage '{self.current_stage_name}' completed!")
-            LOGGER.info(f"   Episodes: {self.episodes_in_stage}")
-            LOGGER.info(f"   Success rate: {success_rate:.2%} (threshold: {threshold:.2%})")
-            LOGGER.info(f"   Avg reward (last {recent_window}): {np.mean(self.episode_rewards[-recent_window:]):.2f}")
+            LOGGER.info("Stage '%s' completed", self.current_stage_name)
+            LOGGER.info("   Episodes: %d", self.episodes_in_stage)
+            LOGGER.info("   Success rate: %.2f%% (threshold: %.2f%%)", 
+                       success_rate * 100, threshold * 100)
+            LOGGER.info("   Avg reward (last %d): %.2f", 
+                       recent_window, np.mean(self.episode_rewards[-recent_window:]))
             return True
         
         return False
@@ -160,7 +162,7 @@ class CurriculumManager:
             True if successfully advanced, False if already at final stage
         """
         if self.current_stage_idx >= len(self.stage_names) - 1:
-            LOGGER.info("🏁 Already at final stage!")
+            LOGGER.info("Already at final stage")
             return False
         
         # Reset metrics for new stage
@@ -173,16 +175,16 @@ class CurriculumManager:
         self.current_stage_name = self.stage_names[self.current_stage_idx]
         
         stage = self.get_current_stage()
-        LOGGER.info(f"")
-        LOGGER.info(f"{'='*70}")
-        LOGGER.info(f"📈 Advanced to stage {self.current_stage_idx + 1}/{len(self.stage_names)}: {self.current_stage_name}")
-        LOGGER.info(f"   Description: {stage['description']}")
-        LOGGER.info(f"   Targets: {len(stage['targets']) if stage['targets'] != 'ALL' else 'ALL'}")
-        LOGGER.info(f"   Max steps: {stage['max_steps']}")
-        LOGGER.info(f"   Success threshold: {stage['success_threshold']:.2%}")
-        LOGGER.info(f"   Min episodes: {stage['min_episodes']}")
-        LOGGER.info(f"{'='*70}")
-        LOGGER.info(f"")
+        LOGGER.info("="*70)
+        LOGGER.info("Advanced to stage %d/%d: %s", 
+                   self.current_stage_idx + 1, len(self.stage_names), self.current_stage_name)
+        LOGGER.info("   Description: %s", stage['description'])
+        LOGGER.info("   Targets: %s", 
+                   len(stage['targets']) if stage['targets'] != 'ALL' else 'ALL')
+        LOGGER.info("   Max steps: %d", stage['max_steps'])
+        LOGGER.info("   Success threshold: %.2f%%", stage['success_threshold'] * 100)
+        LOGGER.info("   Min episodes: %d", stage['min_episodes'])
+        LOGGER.info("="*70)
         
         return True
     
@@ -228,7 +230,7 @@ class CurriculumManager:
         with open(path, 'w') as f:
             json.dump(state, f, indent=2)
         
-        LOGGER.info(f"💾 Curriculum state saved to {path}")
+        LOGGER.info("Curriculum state saved to %s", path)
     
     def load_state(self, path: str) -> bool:
         """Load curriculum state from file.
@@ -240,7 +242,7 @@ class CurriculumManager:
             True if loaded successfully, False if file not found
         """
         if not Path(path).exists():
-            LOGGER.warning(f"Curriculum state file not found: {path}")
+            LOGGER.warning("Curriculum state file not found: %s", path)
             return False
         
         try:
@@ -253,12 +255,12 @@ class CurriculumManager:
             self.episode_rewards = state["episode_rewards"]
             self.episode_success = state["episode_success"]
             
-            LOGGER.info(f"📂 Curriculum state loaded from {path}")
-            LOGGER.info(f"   Resuming at stage: {self.current_stage_name}")
-            LOGGER.info(f"   Episodes in stage: {self.episodes_in_stage}")
+            LOGGER.info("Curriculum state loaded from %s", path)
+            LOGGER.info("   Resuming at stage: %s", self.current_stage_name)
+            LOGGER.info("   Episodes in stage: %d", self.episodes_in_stage)
             return True
         except Exception as exc:
-            LOGGER.error(f"Failed to load curriculum state: {exc}")
+            LOGGER.error("Failed to load curriculum state: %s", exc)
             return False
     
     def get_progress_summary(self) -> str:
@@ -270,13 +272,13 @@ class CurriculumManager:
         info = self.get_stage_info()
         
         summary = []
-        summary.append(f"\n{'='*70}")
-        summary.append(f"📊 CURRICULUM PROGRESS")
-        summary.append(f"{'='*70}")
-        summary.append(f"Stage: {info['stage_idx']}/{info['total_stages']} - {info['stage_name']}")
-        summary.append(f"Episodes: {info['episodes_in_stage']}/{info['min_episodes']} ({info['progress_pct']:.1f}%)")
-        summary.append(f"Recent Success Rate: {info['success_rate_recent']:.2%} (target: {info['threshold']:.2%})")
-        summary.append(f"Recent Avg Reward: {info['avg_reward_recent']:.2f}")
-        summary.append(f"{'='*70}\n")
+        summary.append("="*70)
+        summary.append("CURRICULUM PROGRESS")
+        summary.append("="*70)
+        summary.append("Stage: %d/%d - %s" % (info['stage_idx'], info['total_stages'], info['stage_name']))
+        summary.append("Episodes: %d/%d (%.1f%%)" % (info['episodes_in_stage'], info['min_episodes'], info['progress_pct']))
+        summary.append("Recent Success Rate: %.2f%% (target: %.2f%%)" % (info['success_rate_recent'] * 100, info['threshold'] * 100))
+        summary.append("Recent Avg Reward: %.2f" % info['avg_reward_recent'])
+        summary.append("="*70)
         
         return "\n".join(summary)

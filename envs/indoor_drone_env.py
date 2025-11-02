@@ -140,7 +140,7 @@ class IndoorDroneEnv(gym.Env):
         # Add timeout for connection
         try:
             self.client.confirmConnection()
-            LOGGER.info(f"✅ Connected to AirSim at {self.airsim_ip}:{self.airsim_port}")
+            LOGGER.info("Connected to AirSim at %s:%d", self.airsim_ip, self.airsim_port)
         except Exception as exc:
             raise ConnectionError(
                 f"Failed to connect to AirSim at {self.airsim_ip}:{self.airsim_port}. "
