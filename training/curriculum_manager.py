@@ -90,7 +90,7 @@ class CurriculumManager:
         if targets == "ALL":
             # Filter only landing pads
             landing_actors = [a for a in all_actors if a.startswith("Landing_")]
-            LOGGER.debug(f"Using ALL landing targets: {len(landing_actors)} actors")
+            LOGGER.debug("Using ALL landing targets: %d actors", len(landing_actors))
             return landing_actors
         elif isinstance(targets, list):
             # Validate that requested targets exist
@@ -99,11 +99,11 @@ class CurriculumManager:
             
             if len(valid_targets) < len(targets):
                 missing = set(targets) - set(valid_targets)
-                LOGGER.warning(f"Some target actors not found in environment: {missing}")
+                LOGGER.warning("Some target actors not found in environment: %s", missing)
             
             return valid_targets
         else:
-            LOGGER.error(f"Invalid targets type in stage config: {type(targets)}")
+            LOGGER.error("Invalid targets type in stage config: %s", type(targets))
             return all_actors
     
     def record_episode(self, reward: float, success: bool):

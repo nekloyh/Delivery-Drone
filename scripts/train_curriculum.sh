@@ -20,14 +20,14 @@ fi
 echo ""
 
 # Check Python environment
-if ! command -v python &> /dev/null; then
+if ! command -v python3 &> /dev/null; then
     echo "[ERROR] Python not found"
     exit 1
 fi
 
 # Check required packages
 echo "[CHECK] Verifying dependencies..."
-python -c "import airsim; import stable_baselines3; import gymnasium; import zmq" 2>/dev/null
+python3 -c "import airsim; import stable_baselines3; import gymnasium; import zmq" 2>/dev/null
 if [ $? -ne 0 ]; then
     echo "[ERROR] Missing dependencies. Install with: pip install -r requirements.txt"
     exit 1
@@ -37,7 +37,7 @@ echo ""
 
 # Check AirSim connection (optional, will fail gracefully)
 echo "[CHECK] Testing AirSim connection..."
-python -c "import airsim; client = airsim.MultirotorClient(); client.confirmConnection()" 2>/dev/null
+python3 -c "import airsim; client = airsim.MultirotorClient(ip='host.docker.internal', port=41451); client.confirmConnection()" 2>/dev/null
 if [ $? -eq 0 ]; then
     echo "[OK] AirSim connected"
 else
@@ -55,7 +55,7 @@ echo "[SETUP] Starting feature bridge..."
 if pgrep -f "feature_bridge.py" > /dev/null; then
     echo "[INFO] Feature bridge already running"
 else
-    python bridges/feature_bridge.py &
+    python3 bridges/feature_bridge.py &
     BRIDGE_PID=$!
     echo "[OK] Feature bridge started (PID: $BRIDGE_PID)"
     sleep 3
@@ -72,7 +72,7 @@ echo ""
 mkdir -p logs_curriculum
 
 # Run training
-python training/train_ppo_curriculum.py \
+python3 training/train_ppo_curriculum.py \
     $RESUME_FLAG \
     --env-config configs/fixed_config.json \
     --ppo-config configs/ppo_config.yaml \

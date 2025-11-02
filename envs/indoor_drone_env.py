@@ -65,7 +65,7 @@ class IndoorDroneEnv(gym.Env):
 
         self.dt = float(cfg.get("dt", 0.1))
         self.feature_addr = cfg.get("feature_addr", "tcp://127.0.0.1:5557")
-        self.airsim_ip = cfg.get("airsim_ip", "127.0.0.1")
+        self.airsim_ip = cfg.get("airsim_ip", "host.docker.internal")
         self.airsim_port = int(cfg.get("airsim_port", 41451))
 
         self.reward_weights = RewardWeights.from_mapping(cfg.get("reward"))
@@ -296,7 +296,7 @@ class IndoorDroneEnv(gym.Env):
             try:
                 target_pose = self.client.simGetObjectPose(self.target_goal_name)
             except Exception as exc:
-                LOGGER.error(f"Failed to query target actor '{self.target_goal_name}': {exc}")
+                LOGGER.error("Failed to query target actor '%s': %s", self.target_goal_name, exc)
                 raise RuntimeError(
                     f"Failed to query target actor '{self.target_goal_name}' from AirSim. "
                     f"Available actors: {self.target_actor_names}"
@@ -307,7 +307,7 @@ class IndoorDroneEnv(gym.Env):
                 target_pose.position.y_val, 
                 target_pose.position.z_val
             ])):
-                LOGGER.error(f"Target actor '{self.target_goal_name}' does not exist or has invalid position")
+                LOGGER.error("Target actor '%s' does not exist or has invalid position", self.target_goal_name)
                 raise RuntimeError(
                     f"Target actor '{self.target_goal_name}' does not exist in the level or has invalid position. "
                     f"Check that actor names in config match actors in Unreal Engine level."
@@ -315,7 +315,7 @@ class IndoorDroneEnv(gym.Env):
             
             self.target_goal_pos = self._vector3r_to_np(target_pose.position)
             self.goal = self.target_goal_pos.copy()
-            LOGGER.debug(f"Selected target: {self.target_goal_name} at {self.goal}")
+            LOGGER.debug("Selected target: %s at %s", self.target_goal_name, self.goal)
 
         self.client.simSetVehiclePose(pose, ignore_collision=True)
 

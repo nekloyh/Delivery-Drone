@@ -39,7 +39,7 @@ fi
 
 # Check AirSim connection
 echo "[CHECK] Testing AirSim connection..."
-python -c "import airsim; client = airsim.MultirotorClient(); client.confirmConnection()" 2>/dev/null
+python3 -c "import airsim; client = airsim.MultirotorClient(); client.confirmConnection()" 2>/dev/null
 if [ $? -eq 0 ]; then
     echo "[OK] AirSim connected"
 else
@@ -53,7 +53,7 @@ echo "[SETUP] Starting feature bridge..."
 if pgrep -f "feature_bridge.py" > /dev/null; then
     echo "[INFO] Feature bridge already running"
 else
-    python bridges/feature_bridge.py &
+    python3 bridges/feature_bridge.py &
     BRIDGE_PID=$!
     echo "[OK] Feature bridge started (PID: $BRIDGE_PID)"
     sleep 3
@@ -68,7 +68,7 @@ echo ""
 
 mkdir -p evaluation
 
-python evaluation/eval_curriculum.py \
+python3 evaluation/eval_curriculum.py \
     --model "$MODEL_PATH" \
     --vecnorm "$VECNORM_PATH" \
     --env-config configs/fixed_config.json \

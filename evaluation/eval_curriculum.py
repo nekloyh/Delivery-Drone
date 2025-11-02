@@ -287,7 +287,7 @@ def main():
     LOGGER.info("="*70)
     LOGGER.info("OVERALL SUMMARY")
     LOGGER.info("="*70)
-    LOGGER.info(f"{'Stage':<30} {'Success Rate':<15} {'Avg Reward':<15}")
+    LOGGER.info("%-30s %-15s %-15s", "Stage", "Success Rate", "Avg Reward")
     LOGGER.info("-"*70)
     
     for stage_name, results in all_results.items():
