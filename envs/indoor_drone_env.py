@@ -133,10 +133,20 @@ class IndoorDroneEnv(gym.Env):
         self.action_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(35,), dtype=np.float32)
 
-        # AirSim client
+        # AirSim client with timeout
         os.environ.setdefault("AIRSIM_RPC_PORT", str(self.airsim_port))
         self.client = airsim.MultirotorClient(ip=self.airsim_ip, port=self.airsim_port)
-        self.client.confirmConnection()
+        
+        # Add timeout for connection
+        try:
+            self.client.confirmConnection()
+            LOGGER.info(f"✅ Connected to AirSim at {self.airsim_ip}:{self.airsim_port}")
+        except Exception as exc:
+            raise ConnectionError(
+                f"Failed to connect to AirSim at {self.airsim_ip}:{self.airsim_port}. "
+                "Ensure AirSim/Unreal Engine is running."
+            ) from exc
+        
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
 
@@ -281,21 +291,33 @@ class IndoorDroneEnv(gym.Env):
             self.target_goal_name = "manual"
             self.target_goal_pos = goal_xyz.copy()
         else:
+            # Validate target actors exist before selecting
             self.target_goal_name = str(self.np_random.choice(self.target_actor_names))
             try:
                 target_pose = self.client.simGetObjectPose(self.target_goal_name)
             except Exception as exc:
+                LOGGER.error(f"Failed to query target actor '{self.target_goal_name}': {exc}")
                 raise RuntimeError(
-                    f"Failed to query target actor '{self.target_goal_name}' from AirSim"
+                    f"Failed to query target actor '{self.target_goal_name}' from AirSim. "
+                    f"Available actors: {self.target_actor_names}"
                 ) from exc
-            if target_pose is None:
+            
+            if target_pose is None or not np.all(np.isfinite([
+                target_pose.position.x_val, 
+                target_pose.position.y_val, 
+                target_pose.position.z_val
+            ])):
+                LOGGER.error(f"Target actor '{self.target_goal_name}' does not exist or has invalid position")
                 raise RuntimeError(
-                    f"Target actor '{self.target_goal_name}' does not exist in the level"
+                    f"Target actor '{self.target_goal_name}' does not exist in the level or has invalid position. "
+                    f"Check that actor names in config match actors in Unreal Engine level."
                 )
+            
             self.target_goal_pos = self._vector3r_to_np(target_pose.position)
             self.goal = self.target_goal_pos.copy()
+            LOGGER.debug(f"Selected target: {self.target_goal_name} at {self.goal}")
 
-        self.client.simSetVehiclePose(pose, ignore_collison=True)
+        self.client.simSetVehiclePose(pose, ignore_collision=True)
 
         self.battery = 1.0
         self.prev_acc = np.zeros(3, dtype=np.float32)
@@ -380,10 +402,13 @@ class IndoorDroneEnv(gym.Env):
 
         energy = float(np.sum(thrusts**2))
         self._update_battery(energy)
+        
+        # Check battery depletion
+        battery_depleted = self.battery <= 0.0
 
         obs, _ = self._get_observation()
         self.last_position = obs[:3].copy()
-        terminated = reached or collided
+        terminated = reached or collided or battery_depleted
         truncated = False
         info = {
             "energy": energy * self.dt,
@@ -392,6 +417,8 @@ class IndoorDroneEnv(gym.Env):
             "collision": collided,
             "collisions": int(collided),
             "success": bool(reached),
+            "battery_depleted": battery_depleted,
+            "battery": self.battery,
         }
         return obs, reward, terminated, truncated, info
 

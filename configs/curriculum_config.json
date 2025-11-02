@@ -1,0 +1,113 @@
+{
+  "curriculum": {
+    "stage_1_static": {
+      "description": "Learn basic navigation to single closest target",
+      "targets": ["Landing_101"],
+      "max_steps": 500,
+      "success_threshold": 0.70,
+      "min_episodes": 5000
+    },
+    "stage_2_floor1": {
+      "description": "Floor 1 - All closest targets (easiest)",
+      "targets": [
+        "Landing_101", "Landing_102", "Landing_103", 
+        "Landing_104", "Landing_105", "Landing_106"
+      ],
+      "max_steps": 800,
+      "success_threshold": 0.75,
+      "min_episodes": 10000
+    },
+    "stage_2_floor2": {
+      "description": "Floor 2 - Medium distance",
+      "targets": [
+        "Landing_201", "Landing_202", "Landing_203", 
+        "Landing_204", "Landing_205", "Landing_206"
+      ],
+      "max_steps": 1000,
+      "success_threshold": 0.70,
+      "min_episodes": 10000
+    },
+    "stage_2_floor3": {
+      "description": "Floor 3 - Moderate difficulty",
+      "targets": [
+        "Landing_301", "Landing_302", "Landing_303", 
+        "Landing_304", "Landing_305", "Landing_306"
+      ],
+      "max_steps": 1200,
+      "success_threshold": 0.65,
+      "min_episodes": 10000
+    },
+    "stage_2_floor4": {
+      "description": "Floor 4 - Challenging",
+      "targets": [
+        "Landing_401", "Landing_402", "Landing_403", 
+        "Landing_404", "Landing_405", "Landing_406"
+      ],
+      "max_steps": 1500,
+      "success_threshold": 0.60,
+      "min_episodes": 10000
+    },
+    "stage_2_floor5": {
+      "description": "Floor 5 - Very challenging",
+      "targets": [
+        "Landing_501", "Landing_502", "Landing_503", 
+        "Landing_504", "Landing_505", "Landing_506"
+      ],
+      "max_steps": 1800,
+      "success_threshold": 0.55,
+      "min_episodes": 10000
+    },
+    "stage_2_floor6": {
+      "description": "Floor 6 - Hardest single floor",
+      "targets": [
+        "Landing_601", "Landing_602", "Landing_603", 
+        "Landing_604", "Landing_605", "Landing_606"
+      ],
+      "max_steps": 2000,
+      "success_threshold": 0.50,
+      "min_episodes": 10000
+    },
+    "stage_3_mixed_easy": {
+      "description": "Mix floors 1-3 for generalization",
+      "targets": [
+        "Landing_101", "Landing_102", "Landing_103", "Landing_104", "Landing_105", "Landing_106",
+        "Landing_201", "Landing_202", "Landing_203", "Landing_204", "Landing_205", "Landing_206",
+        "Landing_301", "Landing_302", "Landing_303", "Landing_304", "Landing_305", "Landing_306"
+      ],
+      "max_steps": 1500,
+      "success_threshold": 0.65,
+      "min_episodes": 15000
+    },
+    "stage_3_mixed_hard": {
+      "description": "Mix floors 4-6 for advanced generalization",
+      "targets": [
+        "Landing_401", "Landing_402", "Landing_403", "Landing_404", "Landing_405", "Landing_406",
+        "Landing_501", "Landing_502", "Landing_503", "Landing_504", "Landing_505", "Landing_506",
+        "Landing_601", "Landing_602", "Landing_603", "Landing_604", "Landing_605", "Landing_606"
+      ],
+      "max_steps": 2000,
+      "success_threshold": 0.55,
+      "min_episodes": 15000
+    },
+    "stage_4_full": {
+      "description": "All targets randomized - final challenge",
+      "targets": "ALL",
+      "max_steps": 2000,
+      "success_threshold": 0.55,
+      "min_episodes": 20000
+    }
+  },
+  "training": {
+    "save_freq": 10000,
+    "eval_freq": 5000,
+    "eval_episodes": 50,
+    "log_dir": "logs_curriculum",
+    "checkpoint_on_stage_advance": true,
+    "auto_advance": true
+  },
+  "evaluation": {
+    "episodes_per_stage": 50,
+    "deterministic": true,
+    "render": false
+  }
+}
