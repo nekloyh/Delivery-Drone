@@ -1,3 +1,5 @@
+# PPO configuration matching paper Table II
+
 activation_fn: "Tanh"
 net_arch: [256, 256, 256]
 ortho_init: false

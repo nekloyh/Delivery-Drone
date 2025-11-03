@@ -1,7 +1,7 @@
-"""Feature bridge for ORB-SLAM3 to ZMQ pipeline.
+"""ORB-SLAM3 to ZMQ bridge for RL environment.
 
-Subscribes to ROS2 topics from ORB-SLAM3 (pose and map points) and publishes
-aggregated features via ZMQ for consumption by the RL environment.
+Forwards pose and map points from SLAM to training via ZMQ.
+RPE = ||p_t - p_{t-1}|| measures localization quality.
 """
 
 import argparse
@@ -69,10 +69,9 @@ class FeatureBridge:
         LOGGER.info("Publishing thread started at %.1f Hz", rate_hz)
 
     def _pose_cb(self, msg: PoseStamped) -> None:
-        """Callback for pose updates from ORB-SLAM3."""
+        """Handle pose updates and compute RPE."""
         p = (msg.pose.position.x, msg.pose.position.y, msg.pose.position.z)
 
-        # Compute RPE (distance from previous pose)
         if self.prev_pose is not None:
             dp = np.array(p) - np.array(self.prev_pose)
             self.rpe = float(np.linalg.norm(dp))
@@ -81,7 +80,7 @@ class FeatureBridge:
         self.pose = p
 
     def _map_cb(self, msg: PointCloud) -> None:
-        """Callback for map points updates from ORB-SLAM3."""
+        """Handle map point updates."""
         pts = [(pt.x, pt.y, pt.z) for pt in msg.points]
         self.map_pts = (
             np.array(pts, dtype=np.float32) 

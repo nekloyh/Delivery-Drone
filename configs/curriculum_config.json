@@ -1,74 +1,74 @@
 {
   "curriculum": {
     "stage_1_static": {
-      "description": "Learn basic navigation to single closest target",
+      "description": "Single target navigation",
       "targets": ["Landing_101"],
       "max_steps": 500,
       "success_threshold": 0.70,
-      "min_episodes": 5000
+      "min_episodes": 1000
     },
-    "stage_2_floor1": {
-      "description": "Floor 1 - All closest targets (easiest)",
+    "stage_2a_floor1": {
+      "description": "Floor 1 targets",
       "targets": [
         "Landing_101", "Landing_102", "Landing_103", 
         "Landing_104", "Landing_105", "Landing_106"
       ],
       "max_steps": 800,
       "success_threshold": 0.75,
-      "min_episodes": 10000
+      "min_episodes": 1000
     },
-    "stage_2_floor2": {
-      "description": "Floor 2 - Medium distance",
+    "stage_2b_floor2": {
+      "description": "Floor 2 targets",
       "targets": [
         "Landing_201", "Landing_202", "Landing_203", 
         "Landing_204", "Landing_205", "Landing_206"
       ],
       "max_steps": 1000,
       "success_threshold": 0.70,
-      "min_episodes": 10000
+      "min_episodes": 1000
     },
-    "stage_2_floor3": {
-      "description": "Floor 3 - Moderate difficulty",
+    "stage_2c_floor3": {
+      "description": "Floor 3 targets",
       "targets": [
         "Landing_301", "Landing_302", "Landing_303", 
         "Landing_304", "Landing_305", "Landing_306"
       ],
       "max_steps": 1200,
       "success_threshold": 0.65,
-      "min_episodes": 10000
+      "min_episodes": 1000
     },
-    "stage_2_floor4": {
-      "description": "Floor 4 - Challenging",
+    "stage_2d_floor4": {
+      "description": "Floor 4 targets",
       "targets": [
         "Landing_401", "Landing_402", "Landing_403", 
         "Landing_404", "Landing_405", "Landing_406"
       ],
       "max_steps": 1500,
       "success_threshold": 0.60,
-      "min_episodes": 10000
+      "min_episodes": 1000
     },
-    "stage_2_floor5": {
-      "description": "Floor 5 - Very challenging",
+    "stage_2e_floor5": {
+      "description": "Floor 5 targets",
       "targets": [
         "Landing_501", "Landing_502", "Landing_503", 
         "Landing_504", "Landing_505", "Landing_506"
       ],
       "max_steps": 1800,
       "success_threshold": 0.55,
-      "min_episodes": 10000
+      "min_episodes": 1000
     },
-    "stage_2_floor6": {
-      "description": "Floor 6 - Hardest single floor",
+    "stage_2f_floor6": {
+      "description": "Floor 6 targets",
       "targets": [
         "Landing_601", "Landing_602", "Landing_603", 
         "Landing_604", "Landing_605", "Landing_606"
       ],
       "max_steps": 2000,
       "success_threshold": 0.50,
-      "min_episodes": 10000
+      "min_episodes": 1000
     },
-    "stage_3_mixed_easy": {
-      "description": "Mix floors 1-3 for generalization",
+    "stage_3a_mixed_easy": {
+      "description": "Mixed floors 1-3",
       "targets": [
         "Landing_101", "Landing_102", "Landing_103", "Landing_104", "Landing_105", "Landing_106",
         "Landing_201", "Landing_202", "Landing_203", "Landing_204", "Landing_205", "Landing_206",
@@ -76,10 +76,10 @@
       ],
       "max_steps": 1500,
       "success_threshold": 0.65,
-      "min_episodes": 15000
+      "min_episodes": 1000
     },
-    "stage_3_mixed_hard": {
-      "description": "Mix floors 4-6 for advanced generalization",
+    "stage_3b_mixed_hard": {
+      "description": "Mixed floors 4-6",
       "targets": [
         "Landing_401", "Landing_402", "Landing_403", "Landing_404", "Landing_405", "Landing_406",
         "Landing_501", "Landing_502", "Landing_503", "Landing_504", "Landing_505", "Landing_506",
@@ -87,16 +87,17 @@
       ],
       "max_steps": 2000,
       "success_threshold": 0.55,
-      "min_episodes": 15000
+      "min_episodes": 1000
     },
     "stage_4_full": {
-      "description": "All targets randomized - final challenge",
+      "description": "All 36 targets",
       "targets": "ALL",
       "max_steps": 2000,
       "success_threshold": 0.55,
-      "min_episodes": 20000
+      "min_episodes": 1000
     }
   },
+  
   "training": {
     "save_freq": 10000,
     "eval_freq": 5000,
@@ -105,6 +106,7 @@
     "checkpoint_on_stage_advance": true,
     "auto_advance": true
   },
+  
   "evaluation": {
     "episodes_per_stage": 50,
     "deterministic": true,

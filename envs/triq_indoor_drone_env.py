@@ -19,8 +19,8 @@ except ImportError as exc:  # pragma: no cover - handled at runtime
         "Please install it with `pip install airsim` or run inside the provided Docker container."
     ) from exc
 
-from .features import build_state
-from .reward import RewardWeights, compute_reward
+from .triq_features import build_state
+from .triq_reward import RewardWeights, compute_reward
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class IndoorDroneEnv(gym.Env):
         # Goal / ZMQ / timing
         self.spawn_actor_name = str(cfg.get("spawn_actor_name", "DroneSpawn"))
         target_names_cfg = cfg.get(
-            "target_actor_names", ["TargetSpawn_1", "TargetSpawn_2", "TargetSpawn_3"]
+            "target_actor_names", ["Landing_101", "Landing_102", "Landing_103"]
         )
         self.target_actor_names = self._coerce_name_list(target_names_cfg)
         if not self.target_actor_names:
@@ -67,6 +67,10 @@ class IndoorDroneEnv(gym.Env):
         self.airsim_ip = cfg.get("airsim_ip", "host.docker.internal")
         self.airsim_port = int(cfg.get("airsim_port", 41451))
 
+        self.max_steps = int(cfg.get("max_steps", 300))
+        self.reach_dist = float(cfg.get("reach_dist", 0.3))
+        self.step_count = 0
+        
         self.reward_weights = RewardWeights.from_mapping(cfg.get("reward"))
 
         limits_cfg = cfg.get("limits", {}) or {}
@@ -255,11 +259,14 @@ class IndoorDroneEnv(gym.Env):
     # ------------------------------------------------------------------
     def reset(self, *, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None):
         super().reset(seed=seed)
-
+        self.step_count = 0
         self.client.reset()
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
 
+        self.client.hoverAsync().join()
+        time.sleep(0.1)
+        
         if self.spawn_use_abs and self.spawn_xyz_abs is not None:
             spawn_xyz = self.spawn_xyz_abs.astype(np.float32)
             pose = airsim.Pose(
@@ -318,9 +325,12 @@ class IndoorDroneEnv(gym.Env):
 
         self.client.simSetVehiclePose(pose, ignore_collision=True)
 
+        self.client.hoverAsync().join()
+        time.sleep(0.1)
+        
         self.battery = 1.0
         self.prev_acc = np.zeros(3, dtype=np.float32)
-        self.last_position = spawn_xyz.copy()
+        # self.last_position = spawn_xyz.copy()
         time.sleep(0.1)  # Allow AirSim physics to stabilise
 
         if self.debug_markers:
@@ -351,6 +361,7 @@ class IndoorDroneEnv(gym.Env):
         return obs, used_slam
 
     def step(self, action: np.ndarray):
+        self.step_count += 1
         action = np.clip(action, self.action_space.low, self.action_space.high).astype(np.float32)
         vx, vy, vz, yaw_rate = [float(x) for x in action]
 
@@ -387,7 +398,7 @@ class IndoorDroneEnv(gym.Env):
             position = self.last_position
 
         dist = float(np.linalg.norm(self.goal - position))
-        reached = dist < 0.3
+        reached = dist < self.reach_dist
 
         reward = compute_reward(
             dist_to_goal=dist,
@@ -408,7 +419,7 @@ class IndoorDroneEnv(gym.Env):
         obs, _ = self._get_observation()
         self.last_position = obs[:3].copy()
         terminated = reached or collided or battery_depleted
-        truncated = False
+        truncated = (self.step_count >= self.max_steps) and not terminated
         info = {
             "energy": energy * self.dt,
             "distance_to_goal": dist,

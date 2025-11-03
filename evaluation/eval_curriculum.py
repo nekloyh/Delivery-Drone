@@ -1,10 +1,9 @@
-"""Evaluate trained model across all curriculum stages.
-
-This script evaluates a trained PPO model on all curriculum stages to assess
-generalization and performance across different difficulty levels.
+"""Evaluate trained model across curriculum stages.
 
 Usage:
-    python evaluation/eval_curriculum.py --model logs_curriculum/latest/final_model.zip --vecnorm logs_curriculum/latest/vecnorm_final.pkl
+    python evaluation/eval_curriculum.py \
+        --model logs_curriculum/latest/final_model.zip \
+        --vecnorm logs_curriculum/latest/vecnorm_final.pkl
 """
 
 import sys

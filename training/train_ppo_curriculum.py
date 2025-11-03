@@ -1,11 +1,11 @@
-"""PPO training with curriculum learning for drone navigation.
+"""PPO training with curriculum learning.
 
-This script implements curriculum learning for drone navigation, progressively
-increasing task difficulty as the agent improves. It automatically advances
-through stages based on performance metrics.
+10-stage curriculum: single target → all 36 targets
+Auto-advances when success threshold met
 
 Usage:
-    python training/train_ppo_curriculum.py [--resume]
+    python training/train_ppo_curriculum.py
+    python training/train_ppo_curriculum.py --resume
 """
 
 import os
@@ -296,15 +296,10 @@ def main():
     new_logger = configure(log_dir, ["stdout", "csv", "tensorboard"])
     model.set_logger(new_logger)
     
-    # Log configuration
-    LOGGER.info("="*70)
-    LOGGER.info("CURRICULUM LEARNING TRAINING")
-    LOGGER.info("="*70)
-    LOGGER.info("Total timesteps: %s", f"{args.timesteps:,}")
-    LOGGER.info("Starting stage: %s", curriculum.current_stage_name)
-    LOGGER.info("Total stages: %d", len(curriculum.stage_names))
-    LOGGER.info("Log directory: %s", log_dir)
-    LOGGER.info("="*70)
+    LOGGER.info("Training started")
+    LOGGER.info("Timesteps: %d", args.timesteps)
+    LOGGER.info("Stage: %s (%d/%d)", curriculum.current_stage_name, 1, len(curriculum.stage_names))
+    LOGGER.info("Log dir: %s", log_dir)
     
     # Callbacks
     checkpoint_callback = CheckpointCallback(
