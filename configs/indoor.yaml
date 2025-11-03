@@ -1,53 +1,101 @@
+# Recommended configuration for stable training
 
-# Indoor Drone Deep Triple-Q default config
+device: "cuda"  # or "cpu"
+
 env:
-  map_path: null          # e.g., "maps/map.png" (white=free, black=obstacle)
-  resolution: 0.05        # meters per pixel if you use a real map image
-  width: 120              # used if map_path is null (procedural map)
-  height: 80
-  obstacle_density: 0.12
-  start_goal_min_dist: 10
-  max_speed: 1.5
-  radius: 0.4             # robot radius in meters (used for collision dist)
-  dt: 0.1
+  # AirSim connection
+  airsim_ip: "host.docker.internal"  # or "127.0.0.1" if not in Docker
+  airsim_port: 41451
+  
+  # Spawn settings - CRITICAL for stability
+  spawn_actor_name: "DroneSpawn"
+  spawn_on_ground: false  # MUST be false to prevent ground collision
+  spawn_agl: 1.5  # Spawn 1.5m above ground (in NED: z = -1.5)
+  spawn_yaw: 0.0
+  
+  # Or use absolute position (alternative)
+  # spawn_use_abs: true
+  # spawn_xyz_abs: [0.0, 0.0, -2.0]  # x, y, z in NED coordinates
+  
+  # Target goals
+  target_actor_names:
+    - "Landing_101"
+    - "Landing_102"
+    - "Landing_103"
+  
+  # Or fixed targets
+  # fixed_target_positions:
+  #   - [10.0, 5.0, -1.5]
+  #   - [15.0, -3.0, -1.5]
+  
+  # Episode settings
   max_steps: 300
-  reach_dist: 0.5
-  utility_penalty_near: 0.2   # utility drop when close to obstacles (soft safety)
-  near_margin: 0.6            # meters
-
-constraint:
-  rho_frac: 0.995         # fraction of horizon H we want to be safe: 0.995 ~ zero violations
-  epsilon: 0.0            # small positive slack if needed
+  reach_dist: 0.5  # meters
+  dt: 0.1  # 10 Hz control
+  
+  # Action limits (conservative initially)
+  limits:
+    vxy: 0.8   # m/s horizontal (giảm từ 1.0 để stable hơn)
+    vz: 0.4    # m/s vertical (giảm từ 0.5)
+    yaw_rate: 0.3  # rad/s (giảm từ 0.5)
+  
+  # Reward weights
+  reward:
+    goal_bonus: 500.0
+    dist_coeff: -5.0
+    dt_coeff: -0.1
+    act_quadratic: -0.01
+    collision: -1000.0
+    jerk: -10.0
+  
+  # Safety
+  debug_markers: true
+  feature_addr: "tcp://127.0.0.1:5557"
 
 algo:
+  # Basic settings
+  run_name: "triple_q_indoor_v1"
   seed: 42
+  episodes: 10000
+  save_interval_episodes: 500
+  
+  # Network hyperparameters
+  actor_lr: 0.0003  # Conservative learning rate
+  critic_lr: 0.0003
   gamma: 0.99
   tau: 0.005
-  actor_lr: 3e-4
-  critic_lr: 3e-4
-  batch_size: 256
+  
+  # Replay buffer
   buffer_capacity: 100000
-  warmup_steps: 2000
-  start_noise_std: 0.2
-  noise_std: 0.1
+  batch_size: 256
+  
+  # Exploration - CURRICULUM BASED
+  warmup_steps: 5000  # Tăng từ default để có nhiều stable samples
+  start_noise_std: 0.5  # High noise ở đầu
+  noise_std: 0.05  # Low noise ở cuối (giảm từ 0.1)
+  
+  # TD3 settings
   policy_delay: 2
-  target_policy_noise: 0.2
-  target_policy_noise_clip: 0.5
-  episodes: 3000
-  episodes_per_frame: 60         # K^alpha analogue; update Z after each frame
-  eta: 1.0                       # balances reward vs utility; can scale with frames
-  log_interval_episodes: 10
-  save_interval_episodes: 200
-  run_name: "indoor_triple_q"
+  target_policy_noise: 0.1  # Giảm từ 0.2
+  target_policy_noise_clip: 0.3  # Giảm từ 0.5
+  
+  # Triple-Q CMDP settings
+  episodes_per_frame: 10
+  eta: 0.1
+  
+# Constraint (CMDP)
+constraint:
+  rho_frac: 0.95  # 95% of max_steps should be collision-free
+  epsilon: 0.01
 
+# RND (optional intrinsic motivation)
 rnd:
-  enabled: false
-  scale: 0.2
-  lr: 1e-4
+  enabled: false  # Tắt initially để đơn giản
+  lr: 0.0001
+  scale: 0.1
 
+# Safety filter
 safety_filter:
   enabled: true
-  margin: 0.35     # keep at least this dist to obstacle border (m)
-  hard_stop: true  # if too close, zero the action
-
-device: "cpu"       # "cuda" if available
+  margin: 0.4  # Tăng từ 0.3 để conservative hơn
+  hard_stop: true 

@@ -19,7 +19,7 @@ except ImportError as exc:  # pragma: no cover - handled at runtime
         "Please install it with `pip install airsim` or run inside the provided Docker container."
     ) from exc
 
-from .triq_features import build_state
+from .triq_features import build_state, occupancy_histogram
 from .triq_reward import RewardWeights, compute_reward
 
 LOGGER = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ class IndoorDroneEnv(gym.Env):
         self.target_goal_pos: Optional[np.ndarray] = None
 
         self.dt = float(cfg.get("dt", 0.1))
-        self.feature_addr = cfg.get("feature_addr", "tcp://127.0.0.1:5557")
+        self.feature_addr = ""
         self.airsim_ip = cfg.get("airsim_ip", "host.docker.internal")
         self.airsim_port = int(cfg.get("airsim_port", 41451))
 
@@ -149,17 +149,27 @@ class IndoorDroneEnv(gym.Env):
                 "Ensure AirSim/Unreal Engine is running."
             ) from exc
         
+        try:
+            self.lidar_name = "LidarFront"
+            self.client.getLidarData(lidar_name=self.lidar_name)
+            LOGGER.info("✓ Lidar sensor '%s' connected", self.lidar_name)
+        except Exception as exc:
+            raise ConnectionError(
+                f"Failed to connect to LidarSensor. "
+                f"Make sure you have a Lidar named '{self.lidar_name}' on your drone."
+            ) from exc
+        
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
 
         # ZMQ subscriber for feature bridge
-        ctx = zmq.Context.instance()
-        self.sub = ctx.socket(zmq.SUB)
-        self.sub.setsockopt(zmq.SUBSCRIBE, b"")
-        try:
-            self.sub.connect(self.feature_addr)
-        except Exception as exc:  # pragma: no cover - connection errors logged
-            LOGGER.warning("Failed to connect feature subscriber at %s: %s", self.feature_addr, exc)
+        # ctx = zmq.Context.instance()
+        # self.sub = ctx.socket(zmq.SUB)
+        # self.sub.setsockopt(zmq.SUBSCRIBE, b"")
+        # try:
+        #     self.sub.connect(self.feature_addr)
+        # except Exception as exc:  # pragma: no cover - connection errors logged
+        #     LOGGER.warning("Failed to connect feature subscriber at %s: %s", self.feature_addr, exc)
 
         # Internal state
         self.battery: float = 1.0
@@ -186,31 +196,54 @@ class IndoorDroneEnv(gym.Env):
             raise RuntimeError(f"Received non-finite coordinates from AirSim: {arr!r}")
         return arr
 
-    def _read_bridge(self, timeout: float = 0.05):
-        poller = zmq.Poller()
-        poller.register(self.sub, zmq.POLLIN)
-        socks = dict(poller.poll(int(timeout * 1000)))
-        if self.sub not in socks:
-            return None
-        try:
-            msg = self.sub.recv_json(flags=zmq.NOBLOCK)
-        except zmq.Again:
-            return None
-        p = np.array(msg.get("p", [0.0, 0.0, 0.0]), dtype=np.float32)
-        pts = msg.get("map_points", []) or []
-        map_pts = (
-            np.array(pts, dtype=np.float32)
-            if len(pts) > 0
-            else np.empty((0, 3), dtype=np.float32)
-        )
-        rpe = float(msg.get("rpe", 0.0))
-        return p, map_pts, rpe
+    # def _read_bridge(self, timeout: float = 0.05):
+    #     poller = zmq.Poller()
+    #     poller.register(self.sub, zmq.POLLIN)
+    #     socks = dict(poller.poll(int(timeout * 1000)))
+    #     if self.sub not in socks:
+    #         return None
+    #     try:
+    #         msg = self.sub.recv_json(flags=zmq.NOBLOCK)
+    #     except zmq.Again:
+    #         return None
+    #     p = np.array(msg.get("p", [0.0, 0.0, 0.0]), dtype=np.float32)
+    #     pts = msg.get("map_points", []) or []
+    #     map_pts = (
+    #         np.array(pts, dtype=np.float32)
+    #         if len(pts) > 0
+    #         else np.empty((0, 3), dtype=np.float32)
+    #     )
+    #     rpe = float(msg.get("rpe", 0.0))
+    #     return p, map_pts, rpe
 
-    def _get_ground_truth_state(self):
-        st = self.client.getMultirotorState()
-        pos = st.kinematics_estimated.position
-        p = np.array([pos.x_val, pos.y_val, pos.z_val], dtype=np.float32)
-        return p, np.empty((0, 3), dtype=np.float32), 0.0
+    # def _get_ground_truth_state(self):
+    #     st = self.client.getMultirotorState()
+    #     pos = st.kinematics_estimated.position
+    #     p = np.array([pos.x_val, pos.y_val, pos.z_val], dtype=np.float32)
+    #     return p, np.empty((0, 3), dtype=np.float32), 0.0
+
+    def _get_lidar_features(self, p_drone: np.ndarray) -> Tuple[np.ndarray, float]:
+        try:
+            lidar_data = self.client.getLidarData(lidar_name=self.lidar_name)
+        except Exception:
+            occ = np.zeros(24, dtype=np.float32)
+            min_dist = 5.0 
+            return occ, min_dist
+
+        points = lidar_data.point_cloud
+        if len(points) < 3:
+            occ = np.zeros(24, dtype=np.float32)
+            min_dist = 5.0
+            return occ, min_dist
+
+        points_xyz = np.array(points, dtype=np.float32).reshape(-1, 3)
+        
+        occ = occupancy_histogram(points_xyz, nbins=24, radius=5.0)
+
+        distances = np.linalg.norm(points_xyz, axis=1)
+        min_dist = float(np.min(distances)) if distances.size > 0 else 5.0
+        
+        return occ, min_dist
 
     def _compute_jerk(self, acc: np.ndarray) -> float:
         """Compute jerk magnitude from acceleration."""
@@ -257,16 +290,29 @@ class IndoorDroneEnv(gym.Env):
     # ------------------------------------------------------------------
     # Gym API
     # ------------------------------------------------------------------
+
     def reset(self, *, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None):
+        """
+        IMPROVED RESET với proper drone initialization để tránh rơi
+        """
         super().reset(seed=seed)
         self.step_count = 0
+        
+        # Step 1: Reset AirSim
         self.client.reset()
+        time.sleep(0.2)  # Chờ physics reset
+        
+        # Step 2: Enable API control
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
-
-        self.client.hoverAsync().join()
         time.sleep(0.1)
         
+        # Step 3: Hover BEFORE setting pose (quan trọng!)
+        # Điều này đảm bảo PID controller được khởi tạo
+        self.client.hoverAsync().join()
+        time.sleep(0.3)
+        
+        # Step 4: Xác định spawn position
         if self.spawn_use_abs and self.spawn_xyz_abs is not None:
             spawn_xyz = self.spawn_xyz_abs.astype(np.float32)
             pose = airsim.Pose(
@@ -280,85 +326,103 @@ class IndoorDroneEnv(gym.Env):
                 raise RuntimeError(
                     f"Failed to query spawn actor '{self.spawn_actor_name}' from AirSim"
                 ) from exc
-
+            
             if spawn_pose is None:
                 raise RuntimeError(
                     f"Spawn actor '{self.spawn_actor_name}' does not exist in the level"
                 )
             spawn_xyz = self._vector3r_to_np(spawn_pose.position)
+            
+            # IMPORTANT: Thêm offset z để spawn trên không (không chạm đất)
+            if not self.spawn_on_ground:
+                spawn_xyz[2] -= self.spawn_agl  # AirSim dùng NED coordinate (z âm = lên cao)
+            
             pose = airsim.Pose(
                 airsim.Vector3r(float(spawn_xyz[0]), float(spawn_xyz[1]), float(spawn_xyz[2])),
                 spawn_pose.orientation,
             )
-
+        
+        # Step 5: Set vehicle pose
+        self.client.simSetVehiclePose(pose, ignore_collision=True)
+        time.sleep(0.2)  # Chờ teleport hoàn tất
+        
+        # Step 6: CRITICAL - Hover lại sau khi set pose
+        # Điều này activate PID controller ở vị trí mới
+        self.client.hoverAsync().join()
+        time.sleep(0.5)  # Chờ stabilization
+        
+        # Step 7: Verify drone is stable
+        state = self.client.getMultirotorState()
+        vel = state.kinematics_estimated.linear_velocity
+        speed = np.linalg.norm([vel.x_val, vel.y_val, vel.z_val])
+        
+        if speed > 1.0:
+            print(f"[WARNING] Drone speed {speed:.2f} m/s after reset - may be unstable!")
+            # Force hover thêm lần nữa
+            self.client.hoverAsync().join()
+            time.sleep(0.5)
+        
+        # Step 8: Select goal (giữ nguyên logic cũ)
         if self._fixed_target_cycle is not None:
             goal_xyz = np.asarray(next(self._fixed_target_cycle), dtype=np.float32)
             self.goal = goal_xyz.copy()
             self.target_goal_name = "manual"
             self.target_goal_pos = goal_xyz.copy()
         else:
-            # Validate target actors exist before selecting
             self.target_goal_name = str(self.np_random.choice(self.target_actor_names))
             try:
                 target_pose = self.client.simGetObjectPose(self.target_goal_name)
             except Exception as exc:
-                LOGGER.error("Failed to query target actor '%s': %s", self.target_goal_name, exc)
                 raise RuntimeError(
-                    f"Failed to query target actor '{self.target_goal_name}' from AirSim. "
-                    f"Available actors: {self.target_actor_names}"
+                    f"Failed to query target actor '{self.target_goal_name}' from AirSim"
                 ) from exc
             
-            if target_pose is None or not np.all(np.isfinite([
-                target_pose.position.x_val, 
-                target_pose.position.y_val, 
-                target_pose.position.z_val
-            ])):
-                LOGGER.error("Target actor '%s' does not exist or has invalid position", self.target_goal_name)
+            if target_pose is None:
                 raise RuntimeError(
-                    f"Target actor '{self.target_goal_name}' does not exist in the level or has invalid position. "
-                    f"Check that actor names in config match actors in Unreal Engine level."
+                    f"Target actor '{self.target_goal_name}' does not exist"
                 )
             
             self.target_goal_pos = self._vector3r_to_np(target_pose.position)
             self.goal = self.target_goal_pos.copy()
-            LOGGER.debug("Selected target: %s at %s", self.target_goal_name, self.goal)
-
-        self.client.simSetVehiclePose(pose, ignore_collision=True)
-
-        self.client.hoverAsync().join()
-        time.sleep(0.1)
         
+        # Step 9: Reset internal state
         self.battery = 1.0
         self.prev_acc = np.zeros(3, dtype=np.float32)
-        # self.last_position = spawn_xyz.copy()
-        time.sleep(0.1)  # Allow AirSim physics to stabilise
-
+        
+        # Step 10: Get initial observation
+        obs = self._get_observation()
+        self.last_position = obs[:3].copy()
+        
+        # Step 11: Debug markers
         if self.debug_markers:
             self._plot_spawn_marker(f"SPAWN ({self.spawn_actor_name})")
             self._plot_goal_marker(f"GOAL ({self.target_goal_name})")
-
-        obs, _ = self._get_observation()
-        self.last_position = obs[:3].copy()
+        
         return obs, {}
 
     def _get_observation(self):
-        data = self._read_bridge()
-        if data is None:
-            p, map_pts, rpe = self._get_ground_truth_state()
-            used_slam = False
-        else:
-            p, map_pts, rpe = data
-            used_slam = True
-
+        # THAY THẾ HOÀN TOÀN LOGIC CŨ
         st = self.client.getMultirotorState()
-        v_ = st.kinematics_estimated.linear_velocity
-        v = np.array([v_.x_val, v_.y_val, v_.z_val], dtype=np.float32)
+        pos = st.kinematics_estimated.position
+        vel = st.kinematics_estimated.linear_velocity
+        
+        p = np.array([pos.x_val, pos.y_val, pos.z_val], dtype=np.float32)
+        v = np.array([vel.x_val, vel.y_val, vel.z_val], dtype=np.float32)
+        
+        # Lấy feature từ LIDAR
+        occ, min_dist = self._get_lidar_features(p)
 
         goal_vec = self.goal - p
-        local_pts = map_pts - p.reshape(1, 3) if map_pts.size > 0 else map_pts
 
-        obs = build_state(p, v, goal_vec, self.battery, local_pts, rpe)
-        return obs, used_slam
+        obs = build_state(
+            position=p, 
+            velocity=v, 
+            goal_vector=goal_vec, 
+            battery_frac=self.battery, 
+            occupancy_grid=occ,  # Đổi tên cho rõ
+            min_distance=min_dist  # Đổi rpe thành min_distance
+        )
+        return obs
 
     def step(self, action: np.ndarray):
         self.step_count += 1
@@ -381,7 +445,7 @@ class IndoorDroneEnv(gym.Env):
         jerk = self._compute_jerk(acc)
 
         try:
-            rotors = self.client.getRotorStates().rotors  # type: ignore
+            rotors = self.client.getRotorStates().rotors
             thrusts = np.array([r.thrust for r in rotors], dtype=np.float32)
             if thrusts.size == 0:
                 thrusts = np.array([vx, vy, vz, yaw_rate], dtype=np.float32)
@@ -391,11 +455,13 @@ class IndoorDroneEnv(gym.Env):
         collision_info = self.client.simGetCollisionInfo()
         collided = bool(collision_info.has_collided)
 
-        if self.last_position is None:
-            pos = st.kinematics_estimated.position
-            position = np.array([pos.x_val, pos.y_val, pos.z_val], dtype=np.float32)
-        else:
-            position = self.last_position
+        # Lấy Observation MỚI
+        obs = self._get_observation()
+        self.last_position = obs[:3].copy()
+        
+        # Trích xuất dữ liệu từ observation MỚI
+        position = obs[:3]
+        min_dist = obs[-1] # <--- Dữ liệu khoảng cách TỐI THIỂU MỚI
 
         dist = float(np.linalg.norm(self.goal - position))
         reached = dist < self.reach_dist
@@ -413,16 +479,14 @@ class IndoorDroneEnv(gym.Env):
         energy = float(np.sum(thrusts**2))
         self._update_battery(energy)
         
-        # Check battery depletion
         battery_depleted = self.battery <= 0.0
 
-        obs, _ = self._get_observation()
-        self.last_position = obs[:3].copy()
         terminated = reached or collided or battery_depleted
         truncated = (self.step_count >= self.max_steps) and not terminated
         info = {
             "energy": energy * self.dt,
             "distance_to_goal": dist,
+            "min_distance_obstacle": min_dist, # <--- TRẢ VỀ INFO CHO SAFETY FILTER
             "jerk": jerk,
             "collision": collided,
             "collisions": int(collided),
@@ -435,14 +499,14 @@ class IndoorDroneEnv(gym.Env):
     def render(self):
         pass
 
-    def close(self):
-        try:
-            self.client.reset()
-            self.client.enableApiControl(False)
-            self.client.armDisarm(False)
-        except Exception:
-            pass
-        try:
-            self.sub.close()
-        except Exception:
-            pass
+    # def close(self):
+    #     try:
+    #         self.client.reset()
+    #         self.client.enableApiControl(False)
+    #         self.client.armDisarm(False)
+    #     except Exception:
+    #         pass
+    #     try:
+    #         self.sub.close()
+    #     except Exception:
+    #         pass

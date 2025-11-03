@@ -227,21 +227,28 @@ class DeepTripleQ:
 
                 if self.filter_enabled:
                     state_xy = obs[0:2]
-                    dist = obs[-1]  # min distance to obstacle
+                    # LỖI ĐÃ SỬA: Lấy min_dist từ obs[-1]
+                    # (Vì build_state đã đặt min_distance ở cuối)
+                    dist = obs[-1] 
                     a[0:2] = project_to_safe(state_xy, a[0:2], dist,
                                              margin=self.filter_margin, hard_stop=self.filter_hard_stop)
 
                 next_obs, r, term, trunc, info = self.env.step(a)
-                u = info.get("utility", 1.0)
+                
+                min_dist_obs = info.get("min_distance_obstacle", 5.0)
+                utility_margin = 1.5 # (mét)
+                u = min(1.0, max(0.0, (min_dist_obs - 0.5) / utility_margin))
+                
                 done = term or trunc
 
-                self.buf.add(obs, a, r, u, next_obs, done)
+                self.buf.add(obs, a, r, u, next_obs, done) # u bây giờ là tín hiệu dày đặc
                 obs = next_obs
+                
                 ep_ret += r
                 ep_len += 1
                 ep_util += u
                 reached = reached or bool(info.get("reached", False))
-                viol = viol or bool(info.get("collided", False))
+                viol = viol or bool(info.get("collision", False))
 
                 if self.global_step > self.warmup:
                     _ = self.update()
