@@ -1,30 +1,29 @@
 {
   "SettingsVersion": 1.2,
   "SimMode": "Multirotor",
+
   "ClockSpeed": 3.0,
-  
+
   "ViewMode": "FlyWithMe",
-  "EnableCollisionPassthrough": true,
+  "EnableCollisionPassthrough": false,
   "EnableRpcSceneObjects": true,
   "RpcEnabled": true,
   "RpcPort": 41451,
   "LocalHostIp": "127.0.0.1",
-  
-  
+
   "EngineSettings": {
     "DisableRendering": false,
     "EnableCollision": true,
     "EnablePhysics": true,
     "EnableWind": false
   },
-  
-  
+
   "Vehicles": {
-    "Drone1": {
+    "Drone0": {
       "VehicleType": "SimpleFlight",
       "AutoCreate": true,
-      "DefaultVehicleState": "Disarmed",
-      
+      "DefaultVehicleState": "Armed",
+
       "Cameras": {
         "front_center": {
           "CaptureSettings": [
@@ -32,30 +31,152 @@
               "ImageType": 0,
               "Width": 320,
               "Height": 240,
-              "FOV_Degrees": 90
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "MotionBlurAmount": 0
             }
           ],
           "X": 0.1,
           "Y": 0.0,
-          "Z": 0.0
+          "Z": 0.0,
+          "Pitch": 0.0,
+          "Roll": 0.0,
+          "Yaw": 0.0
         }
       },
-      
+
       "Sensors": {
-        "Barometer":    { "SensorType": 1, "Enabled": true  },
-        "Imu":          { "SensorType": 2, "Enabled": true,  "UpdateFrequency": 200 },
-        "Gps":          { "SensorType": 3, "Enabled": false },
-        "Magnetometer": { "SensorType": 4, "Enabled": true  },
-        "DistanceFront":{ "SensorType": 5, "Enabled": true  },        
+        "Barometer": {
+          "SensorType": 1,
+          "Enabled": true
+        },
+        "Imu": {
+          "SensorType": 2,
+          "Enabled": true,
+          "UpdateFrequency": 200
+        },
+        "Gps": {
+          "SensorType": 3,
+          "Enabled": false
+        },
+        "Magnetometer": {
+          "SensorType": 4,
+          "Enabled": true
+        },
+        "DistanceFront": {
+          "SensorType": 5,
+          "Enabled": true,
+          "MinDistance": 0.2,
+          "MaxDistance": 10.0
+        },
         "LidarFront": {
           "SensorType": 6,
           "Enabled": true,
           "NumberOfChannels": 16,
           "PointsPerSecond": 30000,
           "Range": 50,
-          "RotationsPerSecond": 10
+          "RotationsPerSecond": 10,
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": -0.1,
+          "Roll": 0.0,
+          "Pitch": 0.0,
+          "Yaw": 0.0,
+          "VerticalFOVUpper": 15,
+          "VerticalFOVLower": -15,
+          "HorizontalFOVStart": -180,
+          "HorizontalFOVEnd": 180,
+          "DrawDebugPoints": false
         }
       }
+    }
+  },
+  
+  "Recording": {
+    "RecordOnMove": false,
+    "RecordInterval": 0.05
+  },
+
+  "CameraDefaults": {
+    "CaptureSettings": [
+      {
+        "ImageType": 0,
+        "Width": 320,
+        "Height": 240,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "MotionBlurAmount": 0
+      }
+    ]
+  },
+
+  "SubWindows": [
+    {
+      "WindowID": 0,
+      "CameraName": "front_center",
+      "ImageType": 0,
+      "Visible": false
+    }
+  ],
+
+  "SimpleFlight": {
+    "FirmwareName": "SimpleFlight",
+    "DefaultVehicleState": "Armed",
+    "RC": {
+      "RemoteControlID": 0,
+      "AllowAPIAlways": true,
+      "AllowAPIWhenDisconnected": true
+    },
+
+    "Parameters": {
+      "LockStep": false,
+
+      "VehicleParams": {
+        "Mass": 1.0,
+        "Inertia": {
+          "X": 0.07,
+          "Y": 0.08,
+          "Z": 0.12
+        },
+        "LinearDragCoefficient": 0.01,
+        "AngularDragCoefficient": 0.01,
+        "RestitutionCoeff": 0.0,
+        "FrictionCoeff": 0.5
+      },
+
+      "RotorParams": {
+        "RotorCount": 4,
+        "RotorTimeConstant": 0.01,
+        "RotorSpeedLimit": 100.0,
+        "MaxThrust": 4.179446268,
+        "MaxTorque": 0.055
+      },
+
+      "StabilizationGains": {
+        "AngleP": {
+          "X": 2.5,
+          "Y": 2.5,
+          "Z": 5.0
+        },
+        "AngleRateP": {
+          "X": 0.25,
+          "Y": 0.25,
+          "Z": 0.35
+        },
+        "VelocityP": {
+          "X": 0.2,
+          "Y": 0.2,
+          "Z": 0.4
+        },
+        "PositionP": {
+          "X": 0.25,
+          "Y": 0.25,
+          "Z": 0.5
+        }
+      },
+
+      "EnableTrace": false,
+      "EnableStateLog": false
     }
   }
 }

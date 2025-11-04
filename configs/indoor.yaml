@@ -70,7 +70,7 @@ algo:
   batch_size: 256
   
   # Exploration - CURRICULUM BASED
-  warmup_steps: 5000  # Tăng từ default để có nhiều stable samples
+  warmup_steps: 10000  # Tăng gấp đôi để thu thập nhiều kinh nghiệm ổn định hơn
   start_noise_std: 0.5  # High noise ở đầu
   noise_std: 0.05  # Low noise ở cuối (giảm từ 0.1)
   

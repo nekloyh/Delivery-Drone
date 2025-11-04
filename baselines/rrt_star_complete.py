@@ -333,8 +333,8 @@ def run_rrt_star_episodes(
     vxy: float = 1.0,
     vz: float = 0.5,
     yawrate: float = 0.5,
-    vehicle: str = "Drone1",
-    lidar_name: str = "LidarSensor1",
+    vehicle: str = "Drone0",
+    lidar_name: str = "LidarFront",
 ) -> pd.DataFrame:
     client = airsim.MultirotorClient(ip=airsim_ip, port=airsim_port)
     client.confirmConnection()
