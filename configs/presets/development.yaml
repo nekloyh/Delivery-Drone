@@ -1,0 +1,106 @@
+# Development Configuration - Fast Iteration
+# Version: 3.0.0
+# This configuration is optimized for rapid development and testing
+
+pipeline:
+  version: "3.0.0"
+  preset: "development"
+  
+ppo:
+  algorithm: "PPO"
+  policy: "MlpPolicy"
+  
+  network:
+    architecture: [128, 128]  # Smaller network for faster training
+    activation: "Tanh"
+    ortho_init: false
+    log_std_init: -1.0
+    
+  training:
+    learning_rate: 0.001  # Higher LR for faster learning
+    n_steps: 512  # Fewer steps per update
+    batch_size: 32  # Smaller batches
+    n_epochs: 5  # Fewer epochs
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    clip_range_vf: null
+    ent_coef: 0.01
+    vf_coef: 0.5
+    max_grad_norm: 0.5
+    use_sde: false
+    sde_sample_freq: -1
+    device: "auto"
+    
+environment:
+  simulation:
+    unreal_engine_version: "4.27"
+    airsim_version: "1.8.1"
+    airsim_ip: "127.0.0.1"
+    airsim_port: 41451
+    dt: 0.1
+    clock_speed: 3.0  # Faster simulation for development
+    physics_substeps: 1
+    
+  drone:
+    spawn_position: [0.0, 0.0, -1.0]
+    spawn_yaw: 0.0
+    max_velocity_xy: 1.0
+    max_velocity_z: 0.5
+    max_yaw_rate: 0.5
+    battery_capacity: 1000.0
+    
+  observation:
+    state_dim: 35
+    components:
+      position: 3
+      velocity: 3
+      goal_vector: 3
+      battery: 1
+      occupancy_grid: 24
+      rpe: 1
+      
+  reward:
+    goal_bonus: 500.0
+    distance_coeff: -5.0
+    time_penalty: -0.1
+    energy_coeff: -0.01
+    collision_penalty: -1000.0
+    jerk_penalty: -10.0
+    
+  max_episode_steps: 500  # Shorter episodes for faster testing
+  success_distance: 1.0
+  target_actor_names: []
+    
+curriculum:
+  enabled: true
+  evaluation_window: 100  # Smaller window for faster advancement
+  
+monitoring:
+  tensorboard: true
+  wandb: false  # Disabled for local development
+  wandb_project: "drone-navigation-rl-dev"
+  wandb_entity: null
+  log_interval: 10  # Verbose logging
+  checkpoint_freq: 1000  # Frequent checkpoints
+  video_freq: 0
+  
+reproducibility:
+  seed: 42
+  torch_deterministic: false  # Not needed in development
+  cudnn_deterministic: false
+  cudnn_benchmark: true
+  numpy_seed: 42
+  python_hash_seed: 42
+  
+training:
+  total_timesteps: 100000  # Much fewer for testing
+  resume_enabled: true
+  save_final_model: true
+  checkpoint_on_stage_transition: true
+  
+evaluation:
+  enabled: true
+  frequency: 5000
+  n_episodes: 5  # Quick evaluation
+  deterministic: false

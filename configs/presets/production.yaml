@@ -1,0 +1,109 @@
+# Production Configuration for Drone Navigation RL Training
+# Version: 3.0.0
+# This configuration is optimized for production training with full curriculum
+
+pipeline:
+  version: "3.0.0"
+  preset: "production"
+  
+ppo:
+  algorithm: "PPO"
+  policy: "MlpPolicy"
+  
+  network:
+    architecture: [256, 256, 256]
+    activation: "Tanh"
+    ortho_init: false
+    log_std_init: -1.0
+    
+  training:
+    learning_rate: 0.0003
+    n_steps: 2048
+    batch_size: 64
+    n_epochs: 10
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    clip_range_vf: null
+    ent_coef: 0.01
+    vf_coef: 0.5
+    max_grad_norm: 0.5
+    use_sde: false
+    sde_sample_freq: -1
+    device: "auto"
+    
+environment:
+  simulation:
+    unreal_engine_version: "4.27"
+    airsim_version: "1.8.1"
+    airsim_ip: "127.0.0.1"
+    airsim_port: 41451
+    dt: 0.1
+    clock_speed: 1.0
+    physics_substeps: 1
+    
+  drone:
+    spawn_position: [0.0, 0.0, -1.0]
+    spawn_yaw: 0.0
+    max_velocity_xy: 1.0
+    max_velocity_z: 0.5
+    max_yaw_rate: 0.5
+    battery_capacity: 1000.0
+    
+  observation:
+    state_dim: 35
+    components:
+      position: 3
+      velocity: 3
+      goal_vector: 3
+      battery: 1
+      occupancy_grid: 24
+      rpe: 1
+      
+  reward:
+    goal_bonus: 500.0
+    distance_coeff: -5.0
+    time_penalty: -0.1
+    energy_coeff: -0.01
+    collision_penalty: -1000.0
+    jerk_penalty: -10.0
+    
+  max_episode_steps: 3000
+  success_distance: 1.0
+  target_actor_names: []  # Will be populated by curriculum
+    
+curriculum:
+  enabled: true
+  evaluation_window: 1000
+  
+  # Loaded from curriculum_config.json
+  # This is managed separately for easier editing
+  
+monitoring:
+  tensorboard: true
+  wandb: false
+  wandb_project: "drone-navigation-rl-production"
+  wandb_entity: null
+  log_interval: 100
+  checkpoint_freq: 10000
+  video_freq: 0  # Disabled for performance
+  
+reproducibility:
+  seed: 42
+  torch_deterministic: false  # Set true for reproduction, false for performance
+  cudnn_deterministic: false
+  cudnn_benchmark: true  # Better performance in production
+  numpy_seed: 42
+  python_hash_seed: 42
+  
+training:
+  total_timesteps: 10000000
+  resume_enabled: true
+  save_final_model: true
+  checkpoint_on_stage_transition: true
+  
+evaluation:
+  enabled: true
+  frequency: 50000  # Evaluate every 50k steps
+  n_episodes: 10
+  deterministic: true

@@ -1,115 +1,318 @@
 {
   "curriculum": {
-    "stage_1_static": {
-      "description": "Single target navigation",
+    "stage_1_single_target": {
+      "description": "Master single target navigation - Floor 1 easiest target",
       "targets": ["Landing_101"],
       "max_steps": 500,
-      "success_threshold": 0.70,
-      "min_episodes": 1000
-    },
-    "stage_2a_floor1": {
-      "description": "Floor 1 targets",
-      "targets": [
-        "Landing_101", "Landing_102", "Landing_103", 
-        "Landing_104", "Landing_105", "Landing_106"
-      ],
-      "max_steps": 800,
       "success_threshold": 0.75,
-      "min_episodes": 1000
+      "min_episodes": 500,
+      "difficulty": 1,
+      "floor": 1
     },
-    "stage_2b_floor2": {
-      "description": "Floor 2 targets",
+    "stage_2_floor1_easy": {
+      "description": "Floor 1 navigation - Easy targets (101-103)",
+      "targets": ["Landing_101", "Landing_102", "Landing_103"],
+      "max_steps": 750,
+      "success_threshold": 0.7,
+      "min_episodes": 1000,
+      "difficulty": 2,
+      "floor": 1
+    },
+    "stage_3_floor1_complete": {
+      "description": "Floor 1 complete navigation (101-106)",
       "targets": [
-        "Landing_201", "Landing_202", "Landing_203", 
-        "Landing_204", "Landing_205", "Landing_206"
+        "Landing_101",
+        "Landing_102",
+        "Landing_103",
+        "Landing_104",
+        "Landing_105",
+        "Landing_106"
       ],
       "max_steps": 1000,
-      "success_threshold": 0.70,
-      "min_episodes": 1000
+      "success_threshold": 0.7,
+      "min_episodes": 1500,
+      "difficulty": 3,
+      "floor": 1
     },
-    "stage_2c_floor3": {
-      "description": "Floor 3 targets",
+    "stage_4_floor2_navigation": {
+      "description": "Floor 2 navigation - Increased altitude challenge",
       "targets": [
-        "Landing_301", "Landing_302", "Landing_303", 
-        "Landing_304", "Landing_305", "Landing_306"
+        "Landing_201",
+        "Landing_202",
+        "Landing_203",
+        "Landing_204",
+        "Landing_205",
+        "Landing_206"
       ],
       "max_steps": 1200,
       "success_threshold": 0.65,
-      "min_episodes": 1000
+      "min_episodes": 2000,
+      "difficulty": 4,
+      "floor": 2
     },
-    "stage_2d_floor4": {
-      "description": "Floor 4 targets",
+    "stage_5_floor3_navigation": {
+      "description": "Floor 3 navigation - Medium altitude",
       "targets": [
-        "Landing_401", "Landing_402", "Landing_403", 
-        "Landing_404", "Landing_405", "Landing_406"
+        "Landing_301",
+        "Landing_302",
+        "Landing_303",
+        "Landing_304",
+        "Landing_305",
+        "Landing_306"
       ],
       "max_steps": 1500,
-      "success_threshold": 0.60,
-      "min_episodes": 1000
+      "success_threshold": 0.6,
+      "min_episodes": 2500,
+      "difficulty": 5,
+      "floor": 3
     },
-    "stage_2e_floor5": {
-      "description": "Floor 5 targets",
+    "stage_6_floor4_navigation": {
+      "description": "Floor 4 navigation - High altitude challenge",
       "targets": [
-        "Landing_501", "Landing_502", "Landing_503", 
-        "Landing_504", "Landing_505", "Landing_506"
+        "Landing_401",
+        "Landing_402",
+        "Landing_403",
+        "Landing_404",
+        "Landing_405",
+        "Landing_406"
       ],
       "max_steps": 1800,
       "success_threshold": 0.55,
-      "min_episodes": 1000
+      "min_episodes": 3000,
+      "difficulty": 6,
+      "floor": 4
+    },
+    "stage_7_floor5_navigation": {
+      "description": "Floor 5 navigation - Maximum altitude",
+      "targets": [
+        "Landing_501",
+        "Landing_502",
+        "Landing_503",
+        "Landing_504",
+        "Landing_505",
+        "Landing_506"
+      ],
+      "max_steps": 2000,
+      "success_threshold": 0.5,
+      "min_episodes": 3500,
+      "difficulty": 7,
+      "floor": 5
+    },
+    "stage_8_multi_floor_easy": {
+      "description": "Multi-floor navigation - Floors 1-3",
+      "targets": [
+        "Landing_101",
+        "Landing_102",
+        "Landing_103",
+        "Landing_201",
+        "Landing_202",
+        "Landing_203",
+        "Landing_301",
+        "Landing_302",
+        "Landing_303"
+      ],
+      "max_steps": 2500,
+      "success_threshold": 0.5,
+      "min_episodes": 4000,
+      "difficulty": 8,
+      "floor": "1-3"
+    },
+    "stage_9_multi_floor_hard": {
+      "description": "Multi-floor navigation - Floors 1-5",
+      "targets": [
+        "Landing_101",
+        "Landing_106",
+        "Landing_201",
+        "Landing_206",
+        "Landing_301",
+        "Landing_306",
+        "Landing_401",
+        "Landing_406",
+        "Landing_501",
+        "Landing_506"
+      ],
+      "max_steps": 3000,
+      "success_threshold": 0.45,
+      "min_episodes": 5000,
+      "difficulty": 9,
+      "floor": "1-5"
+    },
+    "stage_10_master": {
+      "description": "Master all targets - Complete building navigation",
+      "targets": [
+        "Landing_101",
+        "Landing_102",
+        "Landing_103",
+        "Landing_104",
+        "Landing_105",
+        "Landing_106",
+        "Landing_201",
+        "Landing_202",
+        "Landing_203",
+        "Landing_204",
+        "Landing_205",
+        "Landing_206",
+        "Landing_301",
+        "Landing_302",
+        "Landing_303",
+        "Landing_304",
+        "Landing_305",
+        "Landing_306",
+        "Landing_401",
+        "Landing_402",
+        "Landing_403",
+        "Landing_404",
+        "Landing_405",
+        "Landing_406",
+        "Landing_501",
+        "Landing_502",
+        "Landing_503",
+        "Landing_504",
+        "Landing_505",
+        "Landing_506"
+      ],
+      "max_steps": 4000,
+      "success_threshold": 0.4,
+      "min_episodes": 10000,
+      "difficulty": 10,
+      "floor": "all"
+    },
+
+    "stage_1f_floor5": {
+      "description": "Floor 5 targets",
+      "targets": [
+        "Landing_501",
+        "Landing_502",
+        "Landing_503",
+        "Landing_504",
+        "Landing_505",
+        "Landing_506"
+      ],
+      "max_steps": 1800,
+      "success_threshold": 0.55,
+      "min_episodes": 1000,
+      "difficulty": 11,
+      "floor": 5
     },
     "stage_2f_floor6": {
       "description": "Floor 6 targets",
       "targets": [
-        "Landing_601", "Landing_602", "Landing_603", 
-        "Landing_604", "Landing_605", "Landing_606"
+        "Landing_601",
+        "Landing_602",
+        "Landing_603",
+        "Landing_604",
+        "Landing_605",
+        "Landing_606"
       ],
       "max_steps": 2000,
-      "success_threshold": 0.50,
-      "min_episodes": 1000
+      "success_threshold": 0.5,
+      "min_episodes": 1000,
+      "difficulty": 12,
+      "floor": 6
     },
     "stage_3a_mixed_easy": {
       "description": "Mixed floors 1-3",
       "targets": [
-        "Landing_101", "Landing_102", "Landing_103", "Landing_104", "Landing_105", "Landing_106",
-        "Landing_201", "Landing_202", "Landing_203", "Landing_204", "Landing_205", "Landing_206",
-        "Landing_301", "Landing_302", "Landing_303", "Landing_304", "Landing_305", "Landing_306"
+        "Landing_101",
+        "Landing_102",
+        "Landing_103",
+        "Landing_104",
+        "Landing_105",
+        "Landing_106",
+        "Landing_201",
+        "Landing_202",
+        "Landing_203",
+        "Landing_204",
+        "Landing_205",
+        "Landing_206",
+        "Landing_301",
+        "Landing_302",
+        "Landing_303",
+        "Landing_304",
+        "Landing_305",
+        "Landing_306"
       ],
       "max_steps": 1500,
       "success_threshold": 0.65,
-      "min_episodes": 1000
+      "min_episodes": 1000,
+      "difficulty": 13,
+      "floor": "1-3"
     },
     "stage_3b_mixed_hard": {
       "description": "Mixed floors 4-6",
       "targets": [
-        "Landing_401", "Landing_402", "Landing_403", "Landing_404", "Landing_405", "Landing_406",
-        "Landing_501", "Landing_502", "Landing_503", "Landing_504", "Landing_505", "Landing_506",
-        "Landing_601", "Landing_602", "Landing_603", "Landing_604", "Landing_605", "Landing_606"
+        "Landing_401",
+        "Landing_402",
+        "Landing_403",
+        "Landing_404",
+        "Landing_405",
+        "Landing_406",
+        "Landing_501",
+        "Landing_502",
+        "Landing_503",
+        "Landing_504",
+        "Landing_505",
+        "Landing_506",
+        "Landing_601",
+        "Landing_602",
+        "Landing_603",
+        "Landing_604",
+        "Landing_605",
+        "Landing_606"
       ],
       "max_steps": 2000,
       "success_threshold": 0.55,
-      "min_episodes": 1000
+      "min_episodes": 1000,
+      "difficulty": 14,
+      "floor": "4-6"
     },
     "stage_4_full": {
       "description": "All 36 targets",
       "targets": "ALL",
       "max_steps": 2000,
       "success_threshold": 0.55,
-      "min_episodes": 1000
+      "min_episodes": 1000,
+      "difficulty": 15,
+      "floor": "all"
+    },
+
+    "training": {
+      "save_freq": 10000,
+      "eval_freq": 5000,
+      "eval_episodes": 50,
+      "log_dir": "logs_curriculum",
+      "checkpoint_on_stage_advance": true,
+      "auto_advance": true
+    },
+    "evaluation": {
+      "episodes_per_stage": 50,
+      "deterministic": true,
+      "render": false
     }
   },
-  
-  "training": {
-    "save_freq": 10000,
-    "eval_freq": 5000,
-    "eval_episodes": 50,
-    "log_dir": "logs_curriculum",
-    "checkpoint_on_stage_advance": true,
-    "auto_advance": true
+
+  "global_config": {
+    "drone_name": "Drone0",
+    "spawn_actor_name": "DroneSpawn",
+    "spawn_location_ue": [6000, -3000, 300],
+    "target_pattern": "Landing_*",
+    "success_distance_threshold": 1.5,
+    "collision_distance_threshold": 0.5,
+    "max_episode_duration": 300.0,
+    "action_repeat": 1,
+    "evaluation_episodes": 100,
+    "checkpoint_frequency": 50000,
+    "tensorboard_log_frequency": 1000
   },
-  
-  "evaluation": {
-    "episodes_per_stage": 50,
-    "deterministic": true,
-    "render": false
+
+  "reward_config": {
+    "goal_reward": 500.0,
+    "distance_penalty_scale": 5.0,
+    "time_penalty": 0.1,
+    "energy_penalty_scale": 0.01,
+    "collision_penalty": 1000.0,
+    "jerk_penalty_scale": 10.0,
+    "hover_penalty": 0.05,
+    "progress_reward_scale": 2.0
   }
 }
