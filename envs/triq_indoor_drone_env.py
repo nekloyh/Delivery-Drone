@@ -16,7 +16,7 @@
 # except ImportError as exc:  # pragma: no cover - handled at runtime
 #     raise ImportError(
 #         "The airsim module is required for IndoorDroneEnv but is not installed. "
-#         "Please install it with `pip install airsim` or run inside the provided Docker container."
+#         "Please install it with `pip install airsim` or activate the conda environment 'drone-env'."
 #     ) from exc
 
 # from .triq_features import build_state, occupancy_histogram
@@ -64,7 +64,7 @@
 
 #         self.dt = float(cfg.get("dt", 0.1))
 #         self.feature_addr = ""
-#         self.airsim_ip = cfg.get("airsim_ip", "host.docker.internal")
+#         self.airsim_ip = cfg.get("airsim_ip", "127.0.0.1")  # Default to localhost for Conda
 #         self.airsim_port = int(cfg.get("airsim_port", 41451))
 
 #         self.max_steps = int(cfg.get("max_steps", 300))
@@ -569,7 +569,7 @@ class IndoorDroneEnv(gym.Env):
         # Timing - CRITICAL FIX: Use longer duration
         self.dt = float(cfg.get("dt", 0.1))
         self.control_duration = 1.0  # Send 1 second commands (stable)
-        self.airsim_ip = cfg.get("airsim_ip", "host.docker.internal")
+        self.airsim_ip = cfg.get("airsim_ip", "127.0.0.1")  # Default to localhost for Conda
         self.airsim_port = int(cfg.get("airsim_port", 41451))
         self.max_steps = int(cfg.get("max_steps", 300))
         self.reach_dist = float(cfg.get("reach_dist", 0.5))

@@ -1,0 +1,49 @@
+name: drone-env
+channels:
+  - pytorch
+  - nvidia        # cần cho pytorch-cuda
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python
+  - python=3.10
+
+  # Core
+  - numpy=1.26.4
+  - pandas=2.2.*
+  - matplotlib=3.8.*
+  - seaborn=0.13.*
+  - scikit-learn=1.4.*
+
+  # Computer vision
+  - opencv=4.9.*
+
+  # PyTorch + CUDA
+  - pytorch=2.3.0
+  - torchvision=0.18.0
+  - torchaudio=2.3.0
+  - pytorch-cuda=12.1   # hoặc: cpuonly nếu không có GPU
+
+  # Dev tools
+  - pip
+  - git
+  - cmake
+  - ninja
+
+  # Utils
+  - tqdm
+  - pyyaml=6.0.*
+  - pyzmq=25.1.*
+  - rich
+  - psutil
+  - eigen
+
+  # Pip packages
+  - pip:
+      - gymnasium==0.29.1
+      - stable-baselines3[extra]==2.3.2
+      - tensorboard==2.16.*
+      - msgpack==0.6.2
+      - transforms3d
+      # airsim: cài riêng bằng wheel (xem bước 3)

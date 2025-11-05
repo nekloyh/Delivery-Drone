@@ -2,7 +2,7 @@ import airsim
 import numpy as np
 import time
 
-client = airsim.MultirotorClient(ip="host.docker.internal", port=41451)
+client = airsim.MultirotorClient(ip="127.0.0.1", port=41451)
 client.confirmConnection()
 
 drone_init = client.simGetObjectPose("DroneSpawn")

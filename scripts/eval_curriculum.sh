@@ -1,11 +1,11 @@
 #!/bin/bash
-# Evaluation script for curriculum learning
+# Evaluation script for trained curriculum model with Conda
 # Usage: ./scripts/eval_curriculum.sh [model_path] [vecnorm_path]
 
 set -e
 
 echo "======================================================================"
-echo "Curriculum Learning Evaluation"
+echo "Curriculum Learning Evaluation (Conda Environment)"
 echo "======================================================================"
 echo ""
 
@@ -22,24 +22,35 @@ if [ ! -f "$MODEL_PATH" ]; then
     echo "[ERROR] Model file not found: $MODEL_PATH"
     echo ""
     echo "Available models:"
-    find logs_curriculum -name "*.zip" 2>/dev/null | head -10 || echo "  No models found"
+    find logs_curriculum checkpoints -name "*.zip" 2>/dev/null | head -10 || echo "  No models found"
     exit 1
 fi
 
 if [ ! -f "$VECNORM_PATH" ]; then
-    echo "[ERROR] VecNormalize file not found: $VECNORM_PATH"
+    echo "[WARNING] VecNormalize file not found: $VECNORM_PATH"
+    echo "[INFO] Will evaluate without VecNormalize"
+fi
+
+# Check if conda is available
+if ! command -v conda &> /dev/null; then
+    echo "[ERROR] Conda not found. Please install Miniconda or Anaconda first."
     exit 1
 fi
 
+# Activate conda environment
+echo "[INFO] Activating conda environment: drone-env"
+eval "$(conda shell.bash hook)"
+conda activate drone-env
+
 # Check Python environment
 if ! command -v python &> /dev/null; then
-    echo "[ERROR] Python not found"
+    echo "[ERROR] Python not found in conda environment"
     exit 1
 fi
 
 # Check AirSim connection
 echo "[CHECK] Testing AirSim connection..."
-python3 -c "import airsim; client = airsim.MultirotorClient(); client.confirmConnection()" 2>/dev/null
+python -c "import airsim; client = airsim.MultirotorClient(ip='127.0.0.1', port=41451); client.confirmConnection()" 2>/dev/null
 if [ $? -eq 0 ]; then
     echo "[OK] AirSim connected"
 else

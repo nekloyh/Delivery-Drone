@@ -3,8 +3,8 @@
 # device: "cuda"  # or "cpu"
 
 # env:
-#   # AirSim connection
-#   airsim_ip: "host.docker.internal"  # or "127.0.0.1" if not in Docker
+#   # AirSim connection (for Conda environment)
+#   airsim_ip: "127.0.0.1"  # localhost for native Conda setup
 #   airsim_port: 41451
   
 #   # Spawn settings - CRITICAL for stability
@@ -110,7 +110,7 @@ constraint:
   epsilon: 0.01
 
 env:
-  airsim_ip: "host.docker.internal"
+  airsim_ip: "127.0.0.1"  # localhost for Conda environment
   airsim_port: 41451
 
   spawn_actor_name: "DroneSpawn"

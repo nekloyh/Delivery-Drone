@@ -16,7 +16,7 @@ try:
 except ImportError as exc:  # pragma: no cover - handled at runtime
     raise ImportError(
         "The airsim module is required for IndoorDroneEnv but is not installed. "
-        "Please install it with `pip install airsim` or run inside the provided Docker container."
+        "Please install it with `pip install airsim` or activate the conda environment 'drone-env'."
     ) from exc
 
 from .features import build_state
@@ -64,7 +64,7 @@ class IndoorDroneEnv(gym.Env):
 
         self.dt = float(cfg.get("dt", 0.1))
         self.feature_addr = cfg.get("feature_addr", "tcp://127.0.0.1:5557")
-        self.airsim_ip = cfg.get("airsim_ip", "host.docker.internal")
+        self.airsim_ip = cfg.get("airsim_ip", "127.0.0.1")  # Default to localhost for Conda
         self.airsim_port = int(cfg.get("airsim_port", 41451))
 
         self.reward_weights = RewardWeights.from_mapping(cfg.get("reward"))

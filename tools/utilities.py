@@ -116,7 +116,7 @@ def check_system_readiness() -> bool:
     LOGGER.info("="*60)
     if all_good:
         LOGGER.info("System is ready for training")
-        LOGGER.info("Quick start: ./scripts/train_curriculum.sh")
+        LOGGER.info("Quick start: .\\scripts\\train_curriculum.bat (Windows)")
     else:
         LOGGER.error("System check failed. Please install missing dependencies")
         LOGGER.error("Run: pip install -r requirements.txt")

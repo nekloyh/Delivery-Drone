@@ -418,7 +418,7 @@ def run_rrt_star_episodes(
 
 def _main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--airsim-ip", default="host.docker.internal")
+    ap.add_argument("--airsim-ip", default="127.0.0.1", help="AirSim IP address (default: localhost)")
     ap.add_argument("--airsim-port", type=int, default=41451)
     ap.add_argument("--vehicle", default="Drone1")
     ap.add_argument("--start-goal-list", required=True)

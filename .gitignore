@@ -1,35 +1,162 @@
-# Large external dependencies
+# ========================================
+# Drone Delivery RL Project - GitIgnore
+# Conda-based Environment (No Docker)
+# ========================================
+
+# ========================================
+# Large External Dependencies
+# ========================================
+# AirSim source (too large, users should clone separately)
 AirSim/
+
+# Unreal Engine binaries (users build their own)
 UE/
 
-# Python cache
-__pycache__/
+# ========================================
+# Python Environment (Conda)
+# ========================================
+# Conda environment folder if created locally
+drone-env/
+env/
+venv/
+.env
+.venv
 
-# Demo and output directories
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ========================================
+# Training & Evaluation Outputs
+# ========================================
+# Logs and checkpoints (too large to commit)
+logs/
+logs_*/
+*_logs/
+checkpoints/
+*.zip
+*.pkl
+*.pth
+*.pt
+
+# TensorBoard files
+events.out.tfevents.*
+runs/
+
+# Evaluation results
+evaluation/results/
+evaluation/plots/
 demo/
 out/
-logs*/
-*_logs/
 
-# Exclude training/evaluation shell scripts from ignore
-# (Keep project-specific scripts)
-*.sh
-!scripts/*.sh
-!ros_ws/**/*.sh
+# ========================================
+# Development & IDE
+# ========================================
+# VS Code
+.vscode/
+*.code-workspace
 
-# Exclude important documentation
+# PyCharm
+.idea/
+*.iml
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.vcxproj.user
+*.sln.docstates
+
+# ========================================
+# OS-specific files
+# ========================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+
+# ========================================
+# Scripts & Documentation
+# ========================================
+# Keep project scripts but ignore temporary ones
+*.sh~
+*.bat~
+
+# Keep all markdown documentation
 *.md
-# !README.md
-!CHANGELOG.md
-!CONTRIBUTING.md
-!LICENSE.md
-!SUMMARY.md
-# !**/README.md
-!evaluation/*.md
-
 *.txt
-# !CHANGES_SUMMARY.txt
+# Keep important text files
 
-# Windows batch files (usually not needed in Linux dev)
-*.bat
+# ========================================
+# AirSim & Unreal Specific
+# ========================================
+# AirSim settings (personal configs)
+# Users should copy from configs/settings.json
+# Documents/AirSim/settings.json
+
+# Unreal Engine crash reports
+UE/*/Saved/Crashes/
+*.dmp
+
+# ========================================
+# ROS Workspace (if used)
+# ========================================
+ros_ws/build/
+ros_ws/devel/
+ros_ws/install/
+ros_ws/log/
+ros_ws/.catkin_workspace
+
+# ========================================
+# Docker (deprecated but keep for reference)
+# ========================================
+# Docker files kept for documentation
+# but not used in Conda setup
+# docker/
+
+# ========================================
+# Temporary & Misc
+# ========================================
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+*~
+
+# Data files (if large datasets)
+data/
+datasets/
+*.hdf5
+*.h5
+
+# ========================================
+# Git specific
+# ========================================
+*.orig
+
 

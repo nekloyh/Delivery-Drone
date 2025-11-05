@@ -1,8 +1,8 @@
 import airsim
 import time
 
-# Connect
-client = airsim.MultirotorClient(ip="host.docker.internal", port=41451)
+# Connect to AirSim running locally (Conda environment)
+client = airsim.MultirotorClient(ip="127.0.0.1", port=41451)
 client.confirmConnection()
 print("✓ Connected to AirSim")
 
