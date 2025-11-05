@@ -67,3 +67,4 @@ def compute_reward(
     reward += cfg.jerk * jerk_mag
 
     return float(reward)
+

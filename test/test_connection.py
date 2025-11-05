@@ -8,7 +8,7 @@ client.confirmConnection()
 drone_init = client.simGetObjectPose("DroneSpawn")
 drone_pose = drone_init.position
 
-goal_spawn = ["TargetSpawn_1", "TargetSpawn_2", "TargetSpawn_3"]
+goal_spawn = ["Landing_202", "Landing_102", "Landing_201"]
 goal_init = client.simGetObjectPose(goal_spawn[0])
 goal_pose = goal_init.position
 
