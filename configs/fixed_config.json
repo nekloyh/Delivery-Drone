@@ -1,0 +1,61 @@
+{
+    "reward": {
+        "goal_bonus": 500.0,
+        "dist_coeff": -5.0,
+        "dt_coeff": -0.1,
+        "act_quadratic": -0.01,
+        "collision": -1000.0,
+        "jerk": -10.0
+    },
+    "limits": {
+        "vxy": 1.0,
+        "vz": 0.5,
+        "yaw_rate": 0.5,
+        "rate_limit": true
+    },
+    "spawn": {
+        "xyz": [
+            5.0,
+            -2.0,
+            -1.2
+        ],
+        "yaw": 1.57
+    },
+    "targets": [
+        {
+            "xyz": [
+                10.0,
+                -2.0,
+                -1.5
+            ]
+        },
+        {
+            "xyz": [
+                12.5,
+                -4.0,
+                -1.5
+            ]
+        },
+        {
+            "xyz": [
+                15.0,
+                -6.0,
+                -1.5
+            ]
+        }
+    ],
+    "env": {
+        "feature_addr": "tcp://127.0.0.1:5557",
+        "floor_heights": [
+            -0.0,
+            -6.0,
+            -12.0,
+            -18.0,
+            -24.0
+        ],
+        "spawn_floor_idx": 0,
+        "spawn_on_ground": true,
+        "spawn_agl": 1.0,
+        "debug_markers": true
+    }
+}
